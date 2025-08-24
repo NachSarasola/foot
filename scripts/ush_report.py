@@ -1,0 +1,142 @@
+"""
+ush_report.py — HTML Report (Ush Pro), standalone
+
+Usage from your run_all.py:
+    from ush_report import render_html_report_pro
+    render_html_report_pro(meta, teams, kpis, ppda_vals,
+                           shotmap_path, xgrace_path, passnet_path,
+                           logo_path=BRAND / "ush_logo_dark.svg",
+                           out_path=REPORT / "river_libertad_report.html")
+"""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Dict, Sequence, Any
+from jinja2 import Template
+import pandas as pd
+
+HTML_TEMPLATE = r"""<!doctype html><html lang='es'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'><title>{{ title }}</title>
+<style>
+:root{
+  --navy:#0A2540;--cyan:#00C2FF;--blue:#5B86E5;--paper:#FFFFFF;--fog:#E6EEF6;
+  --ink:#0A2540;--goal:#FF3366;--grass:#0B1E2D
+}
+*{box-sizing:border-box} body{margin:0;background:#0B1E2D;color:#E6EEF6;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+.card{background:rgba(10,37,64,.25);backdrop-filter:blur(6px);border:1px solid rgba(230,238,246,.08);
+      border-radius:16px;box-shadow:0 6px 24px rgba(10,37,64,.28);padding:20px;margin:16px 0}
+h1{margin:0;font-size:32px} h2{margin:0 0 10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.kpi{background:rgba(230,238,246,.06);border:1px solid rgba(230,238,246,.10);border-radius:12px;padding:12px}
+.kpi b{font-size:16px}
+img{max-width:100%;border-radius:12px;border:1px solid rgba(230,238,246,.08)}
+footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
+.cover{background:linear-gradient(135deg,var(--navy),#081a30);color:#fff;padding:44px 0;border-bottom:1px solid rgba(230,238,246,.12)}
+.cover .title{display:flex;align-items:center;gap:16px}
+.cover h1{font-size:40px;margin:0}
+.badge{display:inline-flex;align-items:center;gap:10px;background:var(--cyan);color:#001018;border-radius:999px;
+       padding:6px 12px;font-weight:700;margin-left:10px}
+.meta{margin-top:10px;color:#cfe3ff}
+.small{font-size:12px;color:#BFD0E6}
+@media print{@page{size:A4;margin:12mm} .pagebreak{page-break-before:always} a[href]:after{content:''}}
+</style></head>
+<body>
+
+  <!-- PORTADA -->
+  <section class="cover">
+    <div class="wrap">
+      <div class="title">
+        <img src="{{ logo }}" alt="Ush Analytics" style="height:72px">
+        <div>
+          <h1>Informe pospartido <span class="badge">Ush Analytics</span></h1>
+          <div>{{ comp }} — {{ date }} — {{ venue }}</div>
+        </div>
+      </div>
+      <div class="meta" style="margin-top:14px">
+        <div><b>Partido:</b> {{ away }} @ {{ home }} — Ida</div>
+        <div><b>Marcador:</b> {{ away_goals }}–{{ home_goals }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTENIDO -->
+  <div class="wrap pagebreak">
+    <section class="card">
+      <h2>KPIs</h2>
+      <div class="kpis">
+        {% for t in teams %}
+        <div class="kpi">
+          <div><b>{{ t }}</b></div>
+          <div>Tiros: {{ kpis[t].shots }}</div>
+          <div>Goles: {{ kpis[t].goals }}</div>
+          <div>xG: {{ "%.2f"|format(kpis[t].xg) }}</div>
+          <div>PPDA: {{ ppda[t] if ppda[t] is not none else "—" }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="small" style="margin-top:6px">PPDA: pases rivales permitidos por acciones defensivas propias en zona alta. Menor = más presión.</div>
+    </section>
+
+    <section class="card">
+      <h2>Visuales</h2>
+      <div class="grid">
+        <div>
+          <h3 style="margin:4px 0 8px 0">Shot Map</h3>
+          <img src="{{ shotmap }}" alt="Shot Map">
+        </div>
+        <div>
+          <h3 style="margin:4px 0 8px 0">xG acumulado</h3>
+          <img src="{{ xgrace }}" alt="xG Race">
+        </div>
+        <div style="grid-column:1/-1">
+          <h3 style="margin:8px 0 8px 0">Red de pases — {{ team_focus }}</h3>
+          <img src="{{ passnet }}" alt="Passing Network">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Notas rápidas</h2>
+      <ul>
+        <li><b>Momentum:</b> {{ away }} mejoró su xG en el ST y convirtió en momentos clave.</li>
+        <li><b>Construcción:</b> {{ home }} priorizó el juego en mitad; presión selectiva del rival (PPDA más bajo).</li>
+        <li><b>Circulación:</b> conexiones fuertes por carril derecho en {{ team_focus }}.</li>
+      </ul>
+      <div class="small">*Informe generado automáticamente por Ush Analytics.*</div>
+    </section>
+  </div>
+
+  <footer>© Ush Analytics — {{ year }}</footer>
+</body></html>"""
+
+def render_html_report_pro(meta: Dict[str, Any],
+                           teams: Sequence[str],
+                           kpis: Dict[str, Dict[str, Any]],
+                           ppda_vals: Dict[str, Any],
+                           shotmap_path: Path,
+                           xgrace_path: Path,
+                           passnet_path: Path,
+                           logo_path: Path,
+                           out_path: Path) -> None:
+    """Renderiza el informe HTML Pro (portada + contenido) con branding Ush."""
+    required_keys = ["competition", "date", "venue_city"]
+    for k in required_keys:
+        if k not in meta:
+            raise KeyError(f"meta['{k}'] faltante")
+
+    title = f"{teams[1]} @ {teams[0]} — Ida {meta['competition']} ({meta['date']}, {meta['venue_city']})"
+    html = Template(HTML_TEMPLATE).render(
+        title=title,
+        logo=str(logo_path),
+        comp=meta["competition"], date=meta["date"], venue=meta["venue_city"],
+        home=teams[0], away=teams[1],
+        home_goals=meta.get("home_goals", ""), away_goals=meta.get("away_goals", ""),
+        teams=teams, kpis=kpis, ppda=ppda_vals, team_focus=teams[1],
+        shotmap=str(shotmap_path), xgrace=str(xgrace_path), passnet=str(passnet_path),
+        year=pd.Timestamp.now().year
+    )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html, encoding="utf-8")
+    print("Reporte HTML Pro →", out_path)

@@ -1,0 +1,32 @@
+{
+  "name": "Ush Analytics Theme",
+  "dataColors": [
+    "#00C2FF",
+    "#5B86E5",
+    "#FF3366",
+    "#0A2540",
+    "#E6EEF6"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#0A2540",
+  "tableAccent": "#00C2FF",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "color": [
+          {
+            "solid": {
+              "color": "#0A2540"
+            }
+          }
+        ],
+        "titleText": [
+          {
+            "fontSize": 12,
+            "fontFamily": "Inter"
+          }
+        ]
+      }
+    }
+  }
+}

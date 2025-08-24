@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <style>
+      .bg { fill: #0A2540; }
+      .fg { fill: #00C2FF; }
+      .white { fill: #ffffff; }
+    </style>
+  </defs>
+  <circle cx="512" cy="512" r="512" class="bg"/>
+  <!-- Stylized U / pitch -->
+  <path class="white" d="M256,256 h128 v320 c0,88 72,160 160,160 s160,-72 160,-160 V256 h128 v320 c0,159 -129,288 -288,288 s-288,-129 -288,-288 V256 z"/>
+  <!-- Upward arrow (analytics growth) -->
+  <path class="fg" d="M320,640 l128,-128 96,96 176,-240 64,48 -208,280 -96,-96 -112,112 z"/>
+</svg>

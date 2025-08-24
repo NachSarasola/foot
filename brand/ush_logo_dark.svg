@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="520" viewBox="0 0 1800 520">
+  <rect width="1800" height="520" fill="#0A2540"/>
+  <g transform="translate(40,40)">
+    <!-- Mark -->
+    <g transform="scale(0.42)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <style>
+      .bg { fill: #FFFFFF; }
+      .fg { fill: #00C2FF; }
+      .white { fill: #ffffff; }
+    </style>
+  </defs>
+  <circle cx="512" cy="512" r="512" class="bg"/>
+  <!-- Stylized U / pitch -->
+  <path class="white" d="M256,256 h128 v320 c0,88 72,160 160,160 s160,-72 160,-160 V256 h128 v320 c0,159 -129,288 -288,288 s-288,-129 -288,-288 V256 z"/>
+  <!-- Upward arrow (analytics growth) -->
+  <path class="fg" d="M320,640 l128,-128 96,96 176,-240 64,48 -208,280 -96,-96 -112,112 z"/>
+</svg>
+    </g>
+  </g>
+  <!-- Wordmark -->
+  <g>
+    <text x="520" y="260" font-family="Rajdhani, 'DejaVu Sans', Arial, sans-serif" font-weight="700" font-size="140" fill="#FFFFFF">Ush</text>
+    <text x="520" y="360" font-family="Inter, 'DejaVu Sans', Arial, sans-serif" font-weight="600" font-size="96" fill="#FFFFFF">Analytics</text>
+    <rect x="520" y="380" width="360" height="10" fill="#00C2FF" rx="5"/>
+  </g>
+</svg>
