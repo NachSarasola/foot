@@ -20,3 +20,25 @@ Abrí `notebooks/01_river_libertad_pospartido.ipynb` y ejecutá todo.
 
 ## Branding
 Usa `brand/` (logo SVG, avatar, paleta, tema PBI).
+
+## Power BI
+
+Para mantener el dashboard actualizado:
+
+1. Ejecutá el pipeline anterior para regenerar `powerbi_exports/*.csv`.
+2. Abrí `powerbi/dashboard.pbix` en Power BI Desktop.
+3. En **Transform Data** → **Data source settings**, apuntá a los CSV exportados (`kpis.csv`, `shots.csv`).
+4. Refrescá el modelo.
+5. Verificá/creá las medidas DAX principales:
+   ```DAX
+   xG = SUM(shots[xg])
+   xA = SUM(kpis[xa])
+   xT_added = SUM(kpis[xt_added])
+   PPDA = SUM(kpis[ppda])
+   ```
+6. Actualizá los visuales:
+   - Tarjetas KPI (xG, xA, xT_added, PPDA).
+   - Visuales R/Python para Shot Map y Passing Network.
+   - Tabla dinámica filtrable por `score_state`.
+7. Exportá capturas a `powerbi_exports/`.
+
