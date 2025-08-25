@@ -2,7 +2,7 @@
 
 ## Cómo correr (sin Jupyter)
 ```
-py -m pip install --user pandas numpy matplotlib mplsoccer jinja2
+pip install -r requirements.txt
 py scripts/run_all.py
 ```
 Salida:
