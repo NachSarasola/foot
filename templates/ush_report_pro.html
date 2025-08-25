@@ -16,6 +16,8 @@ h1{margin:0;font-size:32px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .kpi{background:rgba(230,238,246,.06);border:1px solid rgba(230,238,246,.10);border-radius:12px;padding:12px}
 .kpi b{font-size:16px}
+.kpi-row{display:flex;justify-content:space-between}
+.kpi-row span:last-child{text-align:right}
 img{max-width:100%;border-radius:12px;border:1px solid rgba(230,238,246,.08)}
 footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
 .cover{background:linear-gradient(135deg,var(--navy),#081a30);color:#fff;padding:44px 0;border-bottom:1px solid rgba(230,238,246,.12)}
@@ -57,14 +59,14 @@ footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
       <h2 class="section-title">KPIs</h2>
       <div class="kpis">
         {% for t in teams %}
-        <div class="kpi">
-          <div><b>{{ t }}</b></div>
-          <div>Tiros: {{ kpis[t].shots }}</div>
-          <div>Goles: {{ kpis[t].goals }}</div>
-          <div>xG: {{ "%.2f"|format(kpis[t].xg) }}</div>
-          <div>xT: {{ "%.2f"|format(kpis[t].xt) }}</div>
-          <div>PPDA: {{ ppda[t] if ppda[t] is not none else "—" }}</div>
-        </div>
+          <div class="kpi">
+            <div class="kpi-row"><span><b>{{ t }}</b></span><span></span></div>
+            <div class="kpi-row"><span>Tiros:</span><span>{{ kpis[t].shots }}</span></div>
+            <div class="kpi-row"><span>Goles:</span><span>{{ kpis[t].goals }}</span></div>
+            <div class="kpi-row"><span>xG:</span><span>{{ "%.2f"|format(kpis[t].xg) }}</span></div>
+            <div class="kpi-row"><span>xT:</span><span>{{ "%.2f"|format(kpis[t].xt) }}</span></div>
+            <div class="kpi-row"><span>PPDA:</span><span>{{ ppda[t] if ppda[t] is not none else "—" }}</span></div>
+          </div>
         {% endfor %}
       </div>
       <div class="small note">PPDA: pases rivales permitidos por acciones defensivas propias en zona alta. Menor = más presión.</div>
