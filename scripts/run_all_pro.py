@@ -12,7 +12,7 @@ from mplsoccer import Pitch
 
 # Estilo y helpers
 from ush_style import (
-    COLORS, set_ush_theme, add_grass_texture, scale_sizes, label,
+    COLORS, add_grass_texture, scale_sizes, label,
     curved_edge, annotate_goals_scatter, annotate_goals_on_xg,
     annotate_score, shot_marker_kwargs, shot_on_target_mask
 )
@@ -75,7 +75,7 @@ def draw_shot_map_pro(shots_df, teams, meta, out_path):
         plt.close(fig)
         return
 
-    team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['orange']}
+    team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
 
     pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
     fig, ax = pitch.draw(figsize=FIGSIZE_PITCH)
@@ -136,7 +136,7 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
     df['xg_val'] = pd.to_numeric(df.get('xg', 0), errors='coerce').fillna(0.06)
     minutes = np.arange(0, max(int(df['minute'].max()), 95) + 1)
 
-    colors = {teams[0]: COLORS['blue'], teams[1]: COLORS['orange']}
+    colors = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
     series = {}
     for t in teams:
         by_min = (df[df['team'] == t].groupby('minute')['xg_val']
@@ -149,7 +149,7 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
 
     lead = series[teams[1]] - series[teams[0]]
     ax.fill_between(minutes, series[teams[0]], series[teams[1]],
-                    where=(lead >= 0), interpolate=True, color=COLORS['orange'], alpha=0.08, zorder=0)
+                    where=(lead >= 0), interpolate=True, color=COLORS['cyan'], alpha=0.08, zorder=0)
     ax.fill_between(minutes, series[teams[0]], series[teams[1]],
                     where=(lead < 0), interpolate=True, color=COLORS['blue'], alpha=0.08, zorder=0)
 
@@ -286,13 +286,13 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
         if a in locs.index and b in locs.index:
             xa, ya = float(locs.loc[a, 'x']), float(locs.loc[a, 'y'])
             xb, yb = float(locs.loc[b, 'x']), float(locs.loc[b, 'y'])
-            color = COLORS['goal'] if prog else COLORS['orange']
+            color = COLORS['goal'] if prog else COLORS['cyan']
             weight = w + 1 if prog else w
             curved_edge(ax_pitch, xa, ya, xb, yb, weight=weight, color_main=color)
 
     sizes = scale_sizes(touch_count.reindex(locs.index).fillna(0).astype(int), base=160, k=25, min_size=160, max_size=900)
     pitch.scatter(locs['x'], locs['y'], s=sizes * 1.15, color='#ffffff', alpha=0.08, zorder=3, ax=ax_pitch)
-    pitch.scatter(locs['x'], locs['y'], s=sizes, color=COLORS['orange'], edgecolors=COLORS['fog'],
+    pitch.scatter(locs['x'], locs['y'], s=sizes, color=COLORS['cyan'], edgecolors=COLORS['fog'],
                   linewidth=0.8, alpha=0.95, zorder=4, ax=ax_pitch)
     for name, row in locs.iterrows():
         label(ax_pitch, row['x'], row['y'], str(name).replace('_', ' '))
@@ -321,7 +321,7 @@ def draw_pressure_map(events_df, teams, meta, out_path):
         plt.close(fig)
         return
 
-    team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['orange']}
+    team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
     pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
     fig, ax = pitch.draw(figsize=FIGSIZE_PITCH)
     add_grass_texture(ax, alpha=0.18)
@@ -466,7 +466,7 @@ def generate_report_for_match(
 
     output_dir = Path(output_dir)
 
-    set_ush_theme()
+    plt.style.use("styles/ush_pro.mplstyle")
 
     if match_id is not None and "match_id" in matches_df.columns:
         matches_df = matches_df[matches_df["match_id"] == match_id]

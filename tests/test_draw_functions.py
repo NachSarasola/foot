@@ -2,12 +2,12 @@ import sys
 from pathlib import Path
 import hashlib
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Ensure scripts directory on path
 sys.path.append(str(Path(__file__).resolve().parents[1] / 'scripts'))
 
 from run_all_pro import draw_shot_map_pro, draw_xg_race_pro, draw_pass_network_pro
-from ush_style import set_ush_theme
 
 
 def _sample_shots():
@@ -105,7 +105,7 @@ def _not_empty(path: Path) -> bool:
 
 
 def test_draw_shot_map_pro_creates_image(tmp_path):
-    set_ush_theme()
+    plt.style.use("styles/ush_pro.mplstyle")
     shots = _sample_shots()
     teams = ['Home', 'Away']
     meta = _meta()
@@ -116,7 +116,7 @@ def test_draw_shot_map_pro_creates_image(tmp_path):
 
 
 def test_draw_xg_race_pro_creates_image(tmp_path):
-    set_ush_theme()
+    plt.style.use("styles/ush_pro.mplstyle")
     shots = _sample_shots()
     teams = ['Home', 'Away']
     meta = _meta()
@@ -127,7 +127,7 @@ def test_draw_xg_race_pro_creates_image(tmp_path):
 
 
 def test_draw_pass_network_pro_creates_image(tmp_path):
-    set_ush_theme()
+    plt.style.use("styles/ush_pro.mplstyle")
     events = _sample_events()
     teams = ['Home', 'Away']
     meta = _meta()
@@ -139,7 +139,7 @@ def test_draw_pass_network_pro_creates_image(tmp_path):
 
 
 def test_draw_pass_network_pro_handles_missing_receivers(tmp_path):
-    set_ush_theme()
+    plt.style.use("styles/ush_pro.mplstyle")
     events = _sample_events_missing_receiver()
     teams = ['Home', 'Away']
     meta = _meta()
