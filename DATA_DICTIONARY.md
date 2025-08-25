@@ -13,7 +13,7 @@ This document describes the fields contained in the synthetic dataset located in
 | `period` | int | Match half: 1=first, 2=second. |
 | `minute` | int | Minute of the match (0–90). |
 | `second` | int | Second within the minute (0–59). |
-| `event_type` | str | General classification (pass, carry, shot). |
+| `event_type` | str | General classification (pass, carry, shot, pressure, save, goalkeeper_action, set_piece). |
 | `x` | float | Start X coordinate on a 120×80 pitch. |
 | `y` | float | Start Y coordinate on a 120×80 pitch. |
 | `end_x` | float | End X coordinate. |
@@ -25,6 +25,14 @@ This document describes the fields contained in the synthetic dataset located in
 | `pass_switch` | int | 1 for long switches of play. |
 | `carry_progressive` | int | 1 for carries that move the ball significantly forward. |
 | `set_piece_type` | str | Type of set piece (`corner`, `free_kick`, `throw_in`, `penalty`, or empty for open play). |
+| `pressure` | int | 1 if the event applies pressure to the opponent. |
+| `regain` | int | 1 if the team regains possession. |
+| `keeper_action` | int | 1 for goalkeeper actions such as saves or distributions. |
+| `ppda_chain` | int | Identifier for defensive action sequences used in PPDA. |
+| `opp_passes_chain` | int | Number of opponent passes in the current PPDA chain. |
+| `possession_id` | int | Identifier linking events within the same possession. |
+| `x_norm` | float | Start X coordinate normalised to [0, 1]. |
+| `y_norm` | float | Start Y coordinate normalised to [0, 1]. |
 
 ## matches.csv
 
