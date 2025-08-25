@@ -9,7 +9,6 @@ visualisation pipelines.
 from __future__ import annotations
 
 import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 
@@ -17,39 +16,19 @@ from matplotlib.path import Path
 # Colour palette
 # ---------------------------------------------------------------------------
 COLORS = {
-    "navy": "#0A2540",   # primary background
-    "blue": "#0072B2",   # cb-friendly blue
-    "cyan": "#56B4E9",   # cb-friendly cyan
-    "orange": "#E69F00", # cb-friendly orange
-    "purple": "#CC79A7", # cb-friendly purple
-    "fog": "#E6EEF6",    # light lines/text
-    "grass": "#1B4332",  # pitch background
+    "navy": "#0A2540",
+    "cyan": "#00C2FF",
+    "blue": "#5B86E5",
+    "fog": "#E6EEF6",
     "paper": "#FFFFFF",
-    "ink": "#001018",
+    "grass": "#0B1E2D",
     "goal": "#FF3366",
+    "ink": "#0A2540",
 }
 
 # ---------------------------------------------------------------------------
 # Styling helpers
 # ---------------------------------------------------------------------------
-
-def set_ush_theme():
-    """Apply the default Ush Analytics matplotlib theme.
-
-    The theme adjusts global ``matplotlib.rcParams`` so it only needs to be
-    called once at the start of a script.  It sets dark backgrounds with
-    light foreground elements using the colours defined in :data:`COLORS`.
-    """
-    plt.rcParams.update({
-        "figure.facecolor": COLORS["navy"],
-        "axes.facecolor": COLORS["navy"],
-        "axes.edgecolor": COLORS["fog"],
-        "axes.labelcolor": COLORS["fog"],
-        "xtick.color": COLORS["fog"],
-        "ytick.color": COLORS["fog"],
-        "text.color": COLORS["fog"],
-        "font.family": "sans-serif",
-    })
 
 
 def add_grass_texture(ax, step: float = 5.0, alpha: float = 0.12,

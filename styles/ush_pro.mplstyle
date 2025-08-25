@@ -1,0 +1,8 @@
+figure.facecolor : #0A2540
+axes.facecolor   : #0A2540
+axes.edgecolor   : #E6EEF6
+axes.labelcolor  : #E6EEF6
+xtick.color      : #E6EEF6
+ytick.color      : #E6EEF6
+text.color       : #E6EEF6
+font.family      : sans-serif
