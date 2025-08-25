@@ -6,9 +6,12 @@ pip install -r requirements.txt
 python scripts/run_all_pro.py --events data/events.csv --matches data/matches.csv --output . --team-focus "Equipo B"
 ```
 Salida:
-- report/img/shotmap.png, xg_race.png, pass_network.png
+- report/img/shotmap.png, xg_race.png
+- report/img/pass_network.png *(se genera al vuelo; no se versiona)*
 - report/river_libertad_report.html (2 páginas: tapa + contenido)
 - powerbi_exports/shots.csv y kpis.csv
+
+El archivo `report/img/pass_network.png` se crea al ejecutar el comando anterior y queda excluido del control de versiones.
 
 El informe HTML utiliza un template Jinja ubicado en `templates/ush_report_pro.html`. Si editás ese archivo, los cambios se reflejarán automáticamente al volver a ejecutar el pipeline.
 
