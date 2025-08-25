@@ -18,8 +18,10 @@ from matplotlib.path import Path
 # ---------------------------------------------------------------------------
 COLORS = {
     "navy": "#0A2540",   # primary background
-    "cyan": "#00C2FF",   # accent
-    "blue": "#5B86E5",   # secondary accent
+    "blue": "#0072B2",   # cb-friendly blue
+    "cyan": "#56B4E9",   # cb-friendly cyan
+    "orange": "#E69F00", # cb-friendly orange
+    "purple": "#CC79A7", # cb-friendly purple
     "fog": "#E6EEF6",    # light lines/text
     "grass": "#1B4332",  # pitch background
     "paper": "#FFFFFF",
