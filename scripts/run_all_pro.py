@@ -395,10 +395,20 @@ def process_match(
     )
     print("Listo →", report_path)
 
+    return {
+        "shotmap": shotmap_path,
+        "xg_race": xgrace_path,
+        "pass_network": passnet_path,
+        "pressure_map": pressure_path,
+        "shots_csv": pbi_dir / "shots.csv",
+        "kpis_csv": pbi_dir / "kpis.csv",
+        "report": report_path,
+    }
 
-def main(
-    events_path,
-    matches_path,
+
+def generate_report_for_match(
+    events_df,
+    matches_df,
     output_dir,
     match_id=None,
     team_focus=None,
@@ -406,32 +416,32 @@ def main(
     img_dir="report/img",
     pbi_dir="powerbi_exports",
 ):
-    ROOT = Path(__file__).resolve().parents[1]
-    BRAND = ROOT / 'brand'
+    """Filter matches by ``match_id`` and process them.
 
-    events_path = Path(events_path)
-    matches_path = Path(matches_path)
+    Returns a list of dictionaries with paths to generated files per match.
+    """
+    ROOT = Path(__file__).resolve().parents[1]
+    BRAND = ROOT / "brand"
+
     output_dir = Path(output_dir)
 
     set_ush_theme()
 
-    events_df = pd.read_csv(events_path)
-    matches_df = pd.read_csv(matches_path)
-
-    if match_id is not None and 'match_id' in matches_df.columns:
-        matches_df = matches_df[matches_df['match_id'] == match_id]
+    if match_id is not None and "match_id" in matches_df.columns:
+        matches_df = matches_df[matches_df["match_id"] == match_id]
         if matches_df.empty:
             raise ValueError(f"No match with id {match_id}")
 
-    for _, row in matches_df.iterrows():
+    results = []
+    for idx, row in matches_df.iterrows():
         meta = row.to_dict()
-        mid = meta.get('match_id')
-        if 'match_id' in events_df.columns and mid is not None:
-            events = events_df[events_df['match_id'] == mid].copy()
+        mid = meta.get("match_id")
+        if "match_id" in events_df.columns and mid is not None:
+            events = events_df[events_df["match_id"] == mid].copy()
         else:
             events = events_df.copy()
-        match_out_dir = output_dir / str(mid if mid is not None else _)
-        process_match(
+        match_out_dir = output_dir / str(mid if mid is not None else idx)
+        paths = process_match(
             events,
             meta,
             match_out_dir,
@@ -441,9 +451,11 @@ def main(
             img_dir,
             pbi_dir,
         )
+        results.append({"match_id": mid, **{k: str(v) for k, v in paths.items()}})
+    return results
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Generate Ush Analytics pro report")
     parser.add_argument("--events", required=True, help="Path to events CSV")
     parser.add_argument("--matches", required=True, help="Path to matches CSV")
@@ -462,9 +474,13 @@ if __name__ == "__main__":
         help="Directory for PowerBI exports (relative to match output dir)",
     )
     args = parser.parse_args()
-    main(
-        args.events,
-        args.matches,
+
+    events_df = pd.read_csv(Path(args.events))
+    matches_df = pd.read_csv(Path(args.matches))
+
+    generate_report_for_match(
+        events_df,
+        matches_df,
         args.output,
         args.match_id,
         args.team_focus,
@@ -472,4 +488,8 @@ if __name__ == "__main__":
         args.img_dir,
         args.pbi_dir,
     )
+
+
+if __name__ == "__main__":
+    main()
 
