@@ -12,6 +12,8 @@ h1{margin:0;font-size:32px}
 .kpi b{font-size:16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
 img{max-width:100%;border-radius:12px}
+figure{margin:0}
+figcaption{margin:4px 0 8px 0;font-size:16px;font-weight:700}
 .badge{display:inline-flex;align-items:center;gap:12px;background:var(--navy);color:#fff;border-radius:999px;padding:6px 12px}
 .badge img{height:28px}
 footer{font-size:12px;color:#567;text-align:center;padding:24px}
@@ -21,7 +23,6 @@ footer{font-size:12px;color:#567;text-align:center;padding:24px}
 .tag{display:inline-block;background:var(--cyan);color:#001018;padding:6px 10px;border-radius:999px;font-weight:600;margin-left:8px}
 .meta{margin-top:12px;color:#cfe3ff}
 .logo{height:72px}
-.figure-title{margin:4px 0 8px 0}
 .full-span{grid-column:1/-1}
 .goal{color:var(--goal)}
 hr.sep{border:none;border-top:2px solid var(--fog);margin:8px 0}
@@ -71,11 +72,23 @@ hr.sep{border:none;border-top:2px solid var(--fog);margin:8px 0}
     <section class="card">
       <h2 class="section-title">Visuales</h2>
       <div class="grid">
-        <div><h3 class="figure-title">Shot Map</h3><img src="C:\Users\Usuario\Desktop\river_libertad_portfolio_pack_branded\report\img\shotmap.png" alt="Shot Map"></div>
-        <div><h3 class="figure-title">xG acumulado</h3><img src="C:\Users\Usuario\Desktop\river_libertad_portfolio_pack_branded\report\img\xg_race.png" alt="xG acumulado"></div>
+        <div>
+          <figure>
+            <img src="C:\Users\Usuario\Desktop\river_libertad_portfolio_pack_branded\report\img\shotmap.png" alt="Shot Map">
+            <figcaption>Shot Map</figcaption>
+          </figure>
+        </div>
+        <div>
+          <figure>
+            <img src="C:\Users\Usuario\Desktop\river_libertad_portfolio_pack_branded\report\img\xg_race.png" alt="xG acumulado">
+            <figcaption>xG acumulado</figcaption>
+          </figure>
+        </div>
         <div class="full-span">
-          <h3 class="figure-title">Red de pases — River Plate</h3>
-          <img src="C:\Users\Usuario\Desktop\river_libertad_portfolio_pack_branded\report\img\pass_network.png" alt="Red de pases">
+          <figure>
+            <img src="C:\Users\Usuario\Desktop\river_libertad_portfolio_pack_branded\report\img\pass_network.png" alt="Red de pases">
+            <figcaption>Red de pases — River Plate</figcaption>
+          </figure>
         </div>
       </div>
     </section>

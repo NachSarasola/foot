@@ -19,6 +19,8 @@ h1{margin:0;font-size:32px}
 .kpi-row{display:flex;justify-content:space-between}
 .kpi-row span:last-child{text-align:right}
 img{max-width:100%;border-radius:12px;border:1px solid rgba(230,238,246,.08)}
+figure{margin:0}
+figcaption{margin:4px 0 8px 0;font-size:16px;font-weight:700}
 footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
 .cover{background:linear-gradient(135deg,var(--navy),#081a30);color:#fff;padding:44px 0;border-bottom:1px solid rgba(230,238,246,.12)}
 .cover .title{display:flex;align-items:center;gap:16px}
@@ -29,8 +31,6 @@ footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
 .small{font-size:12px;color:#BFD0E6}
 .logo{height:72px}
 .note{margin-top:6px}
-.figure-title{margin:4px 0 8px 0}
-.figure-title-top{margin-top:8px}
 .full-span{grid-column:1/-1}
 @media print{@page{size:A4;margin:12mm} .pagebreak{page-break-before:always} a[href]:after{content:''}}
 </style></head>
@@ -76,20 +76,28 @@ footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
       <h2 class="section-title">Visuales</h2>
       <div class="grid">
         <div>
-          <h3 class="figure-title">Shot Map</h3>
-          <img src="{{ shotmap }}" alt="Shot Map">
+          <figure>
+            <img src="{{ shotmap }}" alt="Shot Map">
+            <figcaption>Shot Map</figcaption>
+          </figure>
         </div>
         <div>
-          <h3 class="figure-title">xG acumulado</h3>
-          <img src="{{ xgrace }}" alt="xG Race">
+          <figure>
+            <img src="{{ xgrace }}" alt="xG Race">
+            <figcaption>xG acumulado</figcaption>
+          </figure>
         </div>
         <div>
-          <h3 class="figure-title">Mapa de presión</h3>
-          <img src="{{ pressure }}" alt="Pressure Map">
+          <figure>
+            <img src="{{ pressure }}" alt="Pressure Map">
+            <figcaption>Mapa de presión</figcaption>
+          </figure>
         </div>
         <div class="full-span">
-          <h3 class="figure-title figure-title-top">Red de pases — {{ team_focus }}</h3>
-          <img src="{{ passnet }}" alt="Passing Network">
+          <figure>
+            <img src="{{ passnet }}" alt="Passing Network">
+            <figcaption>Red de pases — {{ team_focus }}</figcaption>
+          </figure>
         </div>
       </div>
     </section>
