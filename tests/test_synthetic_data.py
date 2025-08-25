@@ -15,19 +15,37 @@ def test_files_exist_and_nonempty():
 def test_events_flags_and_ranges():
     events = pd.read_csv(DATA / "events.csv")
     assert len(events) >= 2000
-    required = {"pass_switch", "carry_progressive", "set_piece_type"}
+    required = {
+        "pass_switch",
+        "carry_progressive",
+        "set_piece_type",
+        "pressure",
+        "regain",
+        "keeper_action",
+        "ppda_chain",
+        "opp_passes_chain",
+        "possession_id",
+        "x_norm",
+        "y_norm",
+    }
     assert required.issubset(events.columns)
     assert events["x"].between(0, 120).all()
     assert events["y"].between(0, 80).all()
-    assert events["pass_switch"].isin([0, 1]).all()
-    assert events["carry_progressive"].isin([0, 1]).all()
-    assert events["pass_switch"].sum() > 0
-    assert events["pass_switch"].sum() < len(events)
-    assert events["carry_progressive"].sum() > 0
-    assert events["carry_progressive"].sum() < len(events)
+    assert events["x_norm"].between(0, 1).all()
+    assert events["y_norm"].between(0, 1).all()
+    assert (events["x_norm"].sub(events["x"] / 120).abs() < 1e-9).all()
+    assert (events["y_norm"].sub(events["y"] / 80).abs() < 1e-9).all()
+    for col in ["pass_switch", "carry_progressive", "pressure", "regain", "keeper_action"]:
+        assert events[col].isin([0, 1]).all()
+        assert events[col].sum() > 0
+        assert events[col].sum() < len(events)
+    for col in ["ppda_chain", "opp_passes_chain", "possession_id"]:
+        assert events[col].ge(0).all()
     set_types = {"corner", "free_kick", "throw_in", "penalty"}
     present = set(events["set_piece_type"].dropna().unique()) - {""}
     assert set_types.issubset(present)
+    etypes = {"pass", "carry", "shot", "pressure", "save", "goalkeeper_action", "set_piece"}
+    assert etypes.issubset(set(events["event_type"].str.lower()))
 
 
 def test_matches_players_teams_links():

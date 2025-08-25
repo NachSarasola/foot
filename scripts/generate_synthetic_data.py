@@ -92,6 +92,15 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
     events: list[dict[str, object]] = []
     event_id = 1
     set_pieces = ["corner", "free_kick", "throw_in", "penalty"]
+    event_types = [
+        "pass",
+        "carry",
+        "shot",
+        "pressure",
+        "save",
+        "goalkeeper_action",
+        "set_piece",
+    ]
     for _, match in matches.iterrows():
         home = int(match["home_team_id"])
         away = int(match["away_team_id"])
@@ -102,7 +111,7 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
             minute = int(RNG.integers(0, 91))
             second = int(RNG.integers(0, 60))
             period = 1 if minute < 45 else 2
-            event_type = RNG.choice(["pass", "carry", "shot"])
+            event_type = RNG.choice(event_types)
             x = float(RNG.uniform(0, 120))
             y = float(RNG.uniform(0, 80))
             end_x = float(np.clip(x + RNG.normal(0, 15), 0, 120))
@@ -113,9 +122,17 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
             xg = float(RNG.uniform(0, 1)) if is_shot else 0.0
             pass_switch = int(event_type == "pass" and RNG.random() < 0.05)
             carry_progressive = int(event_type == "carry" and RNG.random() < 0.2)
+            pressure = int(event_type == "pressure" or RNG.random() < 0.05)
+            regain = int(RNG.random() < 0.05)
+            keeper_action = int(event_type in {"save", "goalkeeper_action"})
             set_piece_type = ""
-            if RNG.random() < 0.05:
+            if event_type == "set_piece" or RNG.random() < 0.05:
                 set_piece_type = str(RNG.choice(set_pieces))
+            ppda_chain = int(event_id // 20)
+            opp_passes_chain = int(RNG.integers(0, 6))
+            possession_id = int(event_id // 5)
+            x_norm = x / 120
+            y_norm = y / 80
             events.append(
                 {
                     "event_id": event_id,
@@ -137,6 +154,14 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
                     "pass_switch": pass_switch,
                     "carry_progressive": carry_progressive,
                     "set_piece_type": set_piece_type,
+                    "pressure": pressure,
+                    "regain": regain,
+                    "keeper_action": keeper_action,
+                    "ppda_chain": ppda_chain,
+                    "opp_passes_chain": opp_passes_chain,
+                    "possession_id": possession_id,
+                    "x_norm": x_norm,
+                    "y_norm": y_norm,
                 }
             )
             event_id += 1
@@ -145,6 +170,12 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
         events[0]["pass_switch"] = 1
     if not any(e["carry_progressive"] == 1 for e in events):
         events[1]["carry_progressive"] = 1
+    if not any(e["pressure"] == 1 for e in events):
+        events[0]["pressure"] = 1
+    if not any(e["regain"] == 1 for e in events):
+        events[1]["regain"] = 1
+    if not any(e["keeper_action"] == 1 for e in events):
+        events[2]["keeper_action"] = 1
     present = {e["set_piece_type"] for e in events}
     base = {
         "event_id": event_id,
@@ -168,6 +199,14 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
         "pass_switch": 0,
         "carry_progressive": 0,
         "set_piece_type": "",
+        "pressure": 0,
+        "regain": 0,
+        "keeper_action": 0,
+        "ppda_chain": 0,
+        "opp_passes_chain": 0,
+        "possession_id": 0,
+        "x_norm": 50.0 / 120,
+        "y_norm": 40.0 / 80,
     }
     for sp in set_pieces:
         if sp not in present:
@@ -175,6 +214,21 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
             extra["event_id"] = event_id
             event_id += 1
             extra["set_piece_type"] = sp
+            events.append(extra)
+    # ensure each event type present
+    present_types = {e["event_type"] for e in events}
+    for et in event_types:
+        if et not in present_types:
+            extra = base.copy()
+            extra["event_id"] = event_id
+            event_id += 1
+            extra["event_type"] = et
+            if et == "set_piece":
+                extra["set_piece_type"] = set_pieces[0]
+            if et == "pressure":
+                extra["pressure"] = 1
+            if et in {"save", "goalkeeper_action"}:
+                extra["keeper_action"] = 1
             events.append(extra)
     return pd.DataFrame(events)
 
