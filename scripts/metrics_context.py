@@ -10,8 +10,41 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+
+from metrics_pressing import ppda
+
+
+def validate_events(df: pd.DataFrame) -> None:
+    """Validate event data consistency.
+
+    The function raises a :class:`ValueError` if any of the following
+    conditions are not met:
+
+    * The number of goals recorded in ``df`` matches the totals from
+      ``data/matches.csv``.
+    * The :func:`metrics_pressing.ppda` calculation yields only finite
+      values.
+    * The ``xt_added`` column contains no negative values.
+    """
+
+    matches_path = Path(__file__).resolve().parents[1] / "data" / "matches.csv"
+    matches = pd.read_csv(matches_path)
+
+    goals_events = int(df["is_goal"].sum())
+    goals_matches = int(matches["home_score"].sum() + matches["away_score"].sum())
+    if goals_events != goals_matches:
+        raise ValueError("Mismatch between event goals and match scores")
+
+    ppda_df = ppda(df)
+    if not np.isfinite(ppda_df["ppda"]).all():
+        raise ValueError("PPDA contains inf or NaN values")
+
+    if (df["xt_added"] < 0).any():
+        raise ValueError("xt_added must be non-negative")
 
 
 def score_state(events: pd.DataFrame) -> pd.DataFrame:
