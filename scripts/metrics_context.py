@@ -81,24 +81,38 @@ def score_state(events: pd.DataFrame) -> pd.DataFrame:
 def phase_of_play(events: pd.DataFrame) -> pd.DataFrame:
     """Return ``events`` with a ``phase`` column added.
 
-    The phase is a coarse classification using two optional boolean columns:
+    The phase is derived from spatial information and event type using the
+    following heuristics (``x`` and ``y`` scaled 0–100 along pitch length and
+    width):
 
-    ``in_possession``
-        1 if the acting team is in possession of the ball, else 0.
-    ``is_set_piece``
-        1 if the event is a set piece (free‑kick, corner, etc.).
+    ``build_up``
+        Actions occurring in the defensive third (``x < 40``).
+    ``progression``
+        Actions in the middle third (``40 ≤ x < 80``).
+    ``finalization``
+        Shots or any action inside the attacking third (``x ≥ 80``).
 
-    Phases are labelled ``"attack"`` when ``in_possession`` is true,
-    ``"defence"`` when it is false and ``"set_piece"`` takes precedence when
-    ``is_set_piece`` is true.
+    A lower‑case ``event_type`` column is consulted so that shot events are
+    always labelled as ``finalization`` regardless of their location.  If the
+    required columns are missing, zeros or empty strings are assumed.
     """
-    df = events.copy()
-    df["in_possession"] = df.get("in_possession", 0).astype(int)
-    df["is_set_piece"] = df.get("is_set_piece", 0).astype(int)
 
-    df["phase"] = np.where(df["in_possession"] == 1, "attack", "defence")
-    df.loc[df["is_set_piece"] == 1, "phase"] = "set_piece"
-    return df.drop(columns=["in_possession", "is_set_piece"])
+    df = events.copy()
+
+    x = df.get("x", 0)
+    y = df.get("y", 0)
+    event_type = df.get("event_type", "").astype(str).str.lower()
+
+    finalization = (x >= 80) | (event_type == "shot") | ((x >= 70) & y.between(30, 70))
+    progression = (~finalization) & (x >= 40)
+
+    df["phase"] = np.select(
+        [finalization, progression],
+        ["finalization", "progression"],
+        default="build_up",
+    )
+
+    return df
 
 
 def _aggregate(df: pd.DataFrame, group_cols: Iterable[str], metrics: Iterable[str]) -> pd.DataFrame:
@@ -120,12 +134,20 @@ def aggregate_by_score_state(events: pd.DataFrame, metrics: Iterable[str]) -> pd
 
 
 def aggregate_by_phase(events: pd.DataFrame, metrics: Iterable[str]) -> pd.DataFrame:
-    """Aggregate metrics by team and phase of play."""
+    """Aggregate metrics by team and phase of play.
+
+    Phases are the values produced by :func:`phase_of_play` – ``build_up``,
+    ``progression`` and ``finalization``.
+    """
     df = phase_of_play(events)
     return _aggregate(df, ["phase"], metrics)
 
 
 def aggregate_context(events: pd.DataFrame, metrics: Iterable[str]) -> pd.DataFrame:
-    """Aggregate metrics by period, score state and phase simultaneously."""
+    """Aggregate metrics by period, score state and phase simultaneously.
+
+    The resulting ``phase`` column follows the same build‑up → progression →
+    finalization labels as :func:`phase_of_play`.
+    """
     df = score_state(phase_of_play(events))
     return _aggregate(df, ["period", "score_state", "phase"], metrics)
