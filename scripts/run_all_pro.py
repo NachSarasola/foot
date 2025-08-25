@@ -310,12 +310,19 @@ def process_match(
 
     teams = [meta.get('home_team', 'Equipo A'), meta.get('away_team', 'Equipo B')]
 
+    required_cols = {
+        'match_id', 'team', 'is_shot', 'is_goal', 'is_pass', 'is_def_action',
+        'x', 'y', 'end_x', 'end_y', 'xg', 'minute'
+    }
+    missing = required_cols - set(events.columns)
+    if missing:
+        missing_str = ', '.join(sorted(missing))
+        raise ValueError(f"Missing required column(s): {missing_str}")
+
     for c in ['is_shot', 'is_goal', 'is_pass', 'is_def_action']:
-        if c in events.columns:
-            events[c] = pd.to_numeric(events[c], errors='coerce').fillna(0).astype(int)
+        events[c] = pd.to_numeric(events[c], errors='coerce').fillna(0).astype(int)
     for c in ['x', 'y', 'end_x', 'end_y', 'xg', 'minute']:
-        if c in events.columns:
-            events[c] = pd.to_numeric(events[c], errors='coerce')
+        events[c] = pd.to_numeric(events[c], errors='coerce')
 
     shots = events[events.get('is_shot', 0) == 1].copy()
     if 'xg' not in shots.columns or shots['xg'].isna().all():
