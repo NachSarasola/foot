@@ -198,25 +198,13 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     plt.close(fig)
 
 
-def main(events_path, matches_path, output_dir, team_focus=None):
-    ROOT = Path(__file__).resolve().parents[1]
-    BRAND = ROOT / 'brand'
-
-    events_path = Path(events_path)
-    matches_path = Path(matches_path)
-    output_dir = Path(output_dir)
-
+def process_match(events, meta, output_dir, brand_path, team_focus=None):
     report_dir = output_dir / 'report'
     img_dir = report_dir / 'img'
     pbi_dir = output_dir / 'powerbi_exports'
     for p in [report_dir, img_dir, pbi_dir]:
         p.mkdir(parents=True, exist_ok=True)
 
-    set_ush_theme()
-
-    events = pd.read_csv(events_path)
-    matches = pd.read_csv(matches_path)
-    meta = matches.iloc[0].to_dict()
     teams = [meta.get('home_team', 'Equipo A'), meta.get('away_team', 'Equipo B')]
 
     for c in ['is_shot', 'is_goal', 'is_pass', 'is_def_action']:
@@ -249,19 +237,56 @@ def main(events_path, matches_path, output_dir, team_focus=None):
     draw_xg_race_pro(shots, teams, meta, xgrace_path)
     print("Guardado:", xgrace_path)
 
-    if team_focus is None:
-        team_focus = teams[1]
+    focus = team_focus if team_focus is not None else teams[1]
     passnet_path = img_dir / 'pass_network.png'
-    draw_pass_network_pro(events, teams, meta, kpis, team_focus, passnet_path)
+    draw_pass_network_pro(events, teams, meta, kpis, focus, passnet_path)
     print("Guardado:", passnet_path)
 
     shots[['match_id', 'team', 'minute', 'x', 'y', 'is_goal', 'xg']].to_csv(pbi_dir / 'shots.csv', index=False)
     pd.DataFrame([{'team': t, **kpis[t], 'ppda': ppda_vals[t]} for t in teams]).to_csv(pbi_dir / 'kpis.csv', index=False)
 
     report_path = report_dir / 'river_libertad_report.html'
-    render_html_report_pro(meta, teams, kpis, ppda_vals, shotmap_path, xgrace_path,
-                           passnet_path, BRAND / 'ush_logo_dark.svg', report_path)
+    render_html_report_pro(
+        meta,
+        teams,
+        kpis,
+        ppda_vals,
+        shotmap_path,
+        xgrace_path,
+        passnet_path,
+        brand_path / 'ush_logo_dark.svg',
+        report_path,
+    )
     print("Listo →", report_path)
+
+
+def main(events_path, matches_path, output_dir, match_id=None, team_focus=None):
+    ROOT = Path(__file__).resolve().parents[1]
+    BRAND = ROOT / 'brand'
+
+    events_path = Path(events_path)
+    matches_path = Path(matches_path)
+    output_dir = Path(output_dir)
+
+    set_ush_theme()
+
+    events_df = pd.read_csv(events_path)
+    matches_df = pd.read_csv(matches_path)
+
+    if match_id is not None and 'match_id' in matches_df.columns:
+        matches_df = matches_df[matches_df['match_id'] == match_id]
+        if matches_df.empty:
+            raise ValueError(f"No match with id {match_id}")
+
+    for _, row in matches_df.iterrows():
+        meta = row.to_dict()
+        mid = meta.get('match_id')
+        if 'match_id' in events_df.columns and mid is not None:
+            events = events_df[events_df['match_id'] == mid].copy()
+        else:
+            events = events_df.copy()
+        match_out_dir = output_dir / str(mid if mid is not None else _)
+        process_match(events, meta, match_out_dir, BRAND, team_focus)
 
 
 if __name__ == "__main__":
@@ -270,6 +295,7 @@ if __name__ == "__main__":
     parser.add_argument("--matches", required=True, help="Path to matches CSV")
     parser.add_argument("--output", required=True, help="Output directory for generated files")
     parser.add_argument("--team-focus", help="Team to highlight in passing network")
+    parser.add_argument("--match-id", help="Match ID to process (processes all if omitted)")
     args = parser.parse_args()
-    main(args.events, args.matches, args.output, args.team_focus)
+    main(args.events, args.matches, args.output, args.match_id, args.team_focus)
 
