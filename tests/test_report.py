@@ -119,10 +119,12 @@ def test_render_html_report_pro_creates_files(tmp_path):
     kpis = {}
     for t in teams:
         sub = shots[shots["team"] == t]
+        passes = events[(events["team"] == t) & (events["is_pass"] == 1)]
         kpis[t] = {
             "shots": int(len(sub)),
             "goals": int(sub["is_goal"].sum()),
             "xg": float(sub["xg"].sum()),
+            "xt": float(passes.shape[0]),
         }
 
     def ppda(df, team):
@@ -140,10 +142,12 @@ def test_render_html_report_pro_creates_files(tmp_path):
     shotmap_path = tmp_path / "shotmap.png"
     xgrace_path = tmp_path / "xg_race.png"
     passnet_path = tmp_path / "pass_network.png"
+    pressure_path = tmp_path / "pressure.png"
     for path, text in [
         (shotmap_path, "shotmap"),
         (xgrace_path, "xg race"),
         (passnet_path, "pass network"),
+        (pressure_path, "pressure"),
     ]:
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, text)
@@ -161,6 +165,7 @@ def test_render_html_report_pro_creates_files(tmp_path):
         shotmap_path,
         xgrace_path,
         passnet_path,
+        pressure_path,
         logo_path,
         html_path,
     )
@@ -168,4 +173,5 @@ def test_render_html_report_pro_creates_files(tmp_path):
     assert shotmap_path.exists()
     assert xgrace_path.exists()
     assert passnet_path.exists()
+    assert pressure_path.exists()
     assert html_path.exists()
