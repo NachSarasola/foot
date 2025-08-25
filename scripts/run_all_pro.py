@@ -2,16 +2,8 @@
 # Ejecutar en VS Code con ▶️  (sin Jupyter). Requiere: pandas, numpy, matplotlib, mplsoccer, jinja2
 
 
-# Auto-instalar si falta (opcional)
-import sys, subprocess, importlib, argparse
-for pkg in ["pandas", "numpy", "matplotlib", "mplsoccer", "jinja2"]:
-    try:
-        importlib.import_module(pkg)
-    except Exception:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--user", pkg])
-
-=======
-
+# Dependencias
+import argparse
 from pathlib import Path
 import pandas as pd, numpy as np, math
 import matplotlib.pyplot as plt
