@@ -18,6 +18,11 @@ from ush_style import (
 )
 from ush_report import render_html_report_pro
 
+# Tamaños de figura coherentes
+FIGSIZE_PITCH = (12, 8)
+FIGSIZE_XG_RACE = (12, 6)
+FIGSIZE_PASSNET = (12, 8)
+
 
 def xg_lite(row, xmax=120.0, ymax=80.0):
     dx = max(0.0, xmax - float(row.get('x', 0)))
@@ -62,17 +67,18 @@ def calculate_xt(df, teams):
 # ====== SHOT MAP — PRO ======
 def draw_shot_map_pro(shots_df, teams, meta, out_path):
     if shots_df is None or shots_df.empty:
-        fig, ax = plt.subplots(figsize=(10, 7))
+        fig, ax = plt.subplots(figsize=FIGSIZE_PITCH)
         ax.axis('off')
         ax.text(0.5, 0.5, "Sin tiros registrados", ha='center', va='center', fontsize=14)
-        fig.savefig(out_path, dpi=220, bbox_inches='tight')
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
         return
 
     team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
 
     pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
-    fig, ax = pitch.draw(figsize=(10, 7))
+    fig, ax = pitch.draw(figsize=FIGSIZE_PITCH)
     add_grass_texture(ax, alpha=0.18)
 
     for t in teams:
@@ -109,17 +115,19 @@ def draw_shot_map_pro(shots_df, teams, meta, out_path):
     ax.set_title(f"Shot Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
     annotate_score(ax, teams, meta.get('home_goals', 0), meta.get('away_goals', 0))
 
-    fig.savefig(out_path, dpi=220, bbox_inches='tight')
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 
 # ====== XG RACE — PRO ======
 def draw_xg_race_pro(shots_df, teams, meta, out_path):
     if shots_df is None or shots_df.empty:
-        fig, ax = plt.subplots(figsize=(10, 5))
+        fig, ax = plt.subplots(figsize=FIGSIZE_XG_RACE)
         ax.axis('off')
         ax.text(0.5, 0.5, "Sin tiros registrados", ha='center', va='center', fontsize=14)
-        fig.savefig(out_path, dpi=220, bbox_inches='tight')
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
         return
 
@@ -135,7 +143,7 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
                   .sum().reindex(minutes, fill_value=0).cumsum())
         series[t] = by_min
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=FIGSIZE_XG_RACE)
     for t in teams:
         ax.plot(minutes, series[t].values, lw=2.6, alpha=0.95, label=t, color=colors[t])
 
@@ -157,7 +165,8 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
     ax.legend(loc='upper left', frameon=False, fontsize=10)
     ax.set_title(f"xG Race — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
 
-    fig.savefig(out_path, dpi=220, bbox_inches='tight')
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 
@@ -173,19 +182,21 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     df_pass = df_pass[df_pass['team'] == team_focus].copy()
 
     if 'receiver' not in df_pass.columns:
-        fig, ax = plt.subplots(figsize=(12, 7))
+        fig, ax = plt.subplots(figsize=FIGSIZE_PASSNET)
         ax.axis('off')
         ax.text(0.5, 0.5, "Sin datos suficientes para red de pases", ha='center', va='center', fontsize=14, color=COLORS['fog'])
-        fig.savefig(out_path, dpi=220, bbox_inches='tight')
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
         return
 
     df_pass = df_pass[df_pass['receiver'].notna() & (df_pass['receiver'].astype(str).str.strip() != '')].copy()
     if df_pass.empty:
-        fig, ax = plt.subplots(figsize=(12, 7))
+        fig, ax = plt.subplots(figsize=FIGSIZE_PASSNET)
         ax.axis('off')
         ax.text(0.5, 0.5, "Sin datos suficientes para red de pases", ha='center', va='center', fontsize=14, color=COLORS['fog'])
-        fig.savefig(out_path, dpi=220, bbox_inches='tight')
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
         return
 
@@ -208,7 +219,7 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     links = links.merge(prog_links, on=['player', 'receiver'], how='left')
     links['prog_count'] = links.get('prog_count', 0).fillna(0).astype(int)
 
-    fig = plt.figure(figsize=(13.5, 7.5))
+    fig = plt.figure(figsize=FIGSIZE_PASSNET)
     gs = GridSpec(nrows=1, ncols=2, width_ratios=[0.33, 0.67], wspace=0.04, figure=fig)
     ax_info = fig.add_subplot(gs[0, 0])
     ax_pitch = fig.add_subplot(gs[0, 1])
@@ -260,7 +271,8 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
         label(ax_pitch, row['x'], row['y'], str(name).replace('_', ' '))
 
     ax_pitch.set_title(f"Passing Network — {team_focus}", loc='left', color="#cfe3ff", fontsize=13, pad=10)
-    fig.savefig(out_path, dpi=220, bbox_inches='tight')
+    fig.set_constrained_layout(True)
+    fig.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 
@@ -274,16 +286,17 @@ def draw_pressure_map(events_df, teams, meta, out_path):
     )
     df = df[mask]
     if df.empty:
-        fig, ax = plt.subplots(figsize=(10, 7))
+        fig, ax = plt.subplots(figsize=FIGSIZE_PITCH)
         ax.axis('off')
         ax.text(0.5, 0.5, "Sin acciones defensivas altas", ha='center', va='center', fontsize=14)
-        fig.savefig(out_path, dpi=220, bbox_inches='tight')
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
         return
 
     team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
     pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
-    fig, ax = pitch.draw(figsize=(10, 7))
+    fig, ax = pitch.draw(figsize=FIGSIZE_PITCH)
     add_grass_texture(ax, alpha=0.18)
 
     for t in teams:
@@ -296,7 +309,8 @@ def draw_pressure_map(events_df, teams, meta, out_path):
     if leg is not None and leg.get_title() is not None:
         leg.get_title().set_color(COLORS['fog'])
     ax.set_title(f"Pressure Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
-    fig.savefig(out_path, dpi=220, bbox_inches='tight')
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
 
