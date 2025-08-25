@@ -62,6 +62,35 @@ def _sample_events():
     ])
 
 
+def _sample_events_missing_receiver():
+    return pd.DataFrame([
+        {
+            'team': 'Away',
+            'is_pass': 1,
+            'event_type': 'Pass',
+            'player': 'A1',
+            'receiver': None,
+            'x': 50,
+            'y': 40,
+            'end_x': 80,
+            'end_y': 50,
+            'minute': 5,
+        },
+        {
+            'team': 'Away',
+            'is_pass': 1,
+            'event_type': 'Pass',
+            'player': 'A1',
+            'receiver': '',
+            'x': 55,
+            'y': 45,
+            'end_x': 85,
+            'end_y': 55,
+            'minute': 15,
+        },
+    ])
+
+
 def _meta():
     return {'home_goals': 0, 'away_goals': 1, 'date': '2023-01-01'}
 
@@ -104,6 +133,18 @@ def test_draw_pass_network_pro_creates_image(tmp_path):
     meta = _meta()
     kpis = _kpis()
     out = tmp_path / 'passnet.png'
+    draw_pass_network_pro(events, teams, meta, kpis, 'Away', out)
+    assert out.exists()
+    assert _not_empty(out)
+
+
+def test_draw_pass_network_pro_handles_missing_receivers(tmp_path):
+    set_ush_theme()
+    events = _sample_events_missing_receiver()
+    teams = ['Home', 'Away']
+    meta = _meta()
+    kpis = _kpis()
+    out = tmp_path / 'passnet_missing.png'
     draw_pass_network_pro(events, teams, meta, kpis, 'Away', out)
     assert out.exists()
     assert _not_empty(out)

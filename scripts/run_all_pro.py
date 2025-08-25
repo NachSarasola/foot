@@ -7,6 +7,7 @@ import argparse
 from pathlib import Path
 import pandas as pd, numpy as np, math
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 from mplsoccer import Pitch
 
 # Estilo y helpers
@@ -162,12 +163,25 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
 
 # ====== PASSING NETWORK — PRO ======
 def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
+    """Dibuja la red de pases para un equipo.
+
+    Se requiere la columna ``receiver``; las filas con receptor nulo o
+    cadena vacía se eliminan antes de calcular la red.
+    """
     df = events_df.copy()
     df_pass = df[(df.get('is_pass', 0) == 1) & (df.get('event_type') == 'Pass')]
     df_pass = df_pass[df_pass['team'] == team_focus].copy()
 
-    has_receiver = ('receiver' in df_pass.columns) and df_pass['receiver'].notna().any() and (df_pass['receiver'] != '').any()
-    if df_pass.empty or not has_receiver:
+    if 'receiver' not in df_pass.columns:
+        fig, ax = plt.subplots(figsize=(12, 7))
+        ax.axis('off')
+        ax.text(0.5, 0.5, "Sin datos suficientes para red de pases", ha='center', va='center', fontsize=14, color=COLORS['fog'])
+        fig.savefig(out_path, dpi=220, bbox_inches='tight')
+        plt.close(fig)
+        return
+
+    df_pass = df_pass[df_pass['receiver'].notna() & (df_pass['receiver'].astype(str).str.strip() != '')].copy()
+    if df_pass.empty:
         fig, ax = plt.subplots(figsize=(12, 7))
         ax.axis('off')
         ax.text(0.5, 0.5, "Sin datos suficientes para red de pases", ha='center', va='center', fontsize=14, color=COLORS['fog'])
@@ -194,7 +208,6 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     links = links.merge(prog_links, on=['player', 'receiver'], how='left')
     links['prog_count'] = links.get('prog_count', 0).fillna(0).astype(int)
 
-    from matplotlib.gridspec import GridSpec
     fig = plt.figure(figsize=(13.5, 7.5))
     gs = GridSpec(nrows=1, ncols=2, width_ratios=[0.33, 0.67], wspace=0.04, figure=fig)
     ax_info = fig.add_subplot(gs[0, 0])
