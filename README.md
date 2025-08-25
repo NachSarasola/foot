@@ -10,6 +10,8 @@ Salida:
 - report/river_libertad_report.html (2 páginas: tapa + contenido)
 - powerbi_exports/shots.csv y kpis.csv
 
+El informe HTML utiliza un template Jinja ubicado en `templates/ush_report_pro.html`. Si editás ese archivo, los cambios se reflejarán automáticamente al volver a ejecutar el pipeline.
+
 ## Jupyter
 Abrí `notebooks/01_river_libertad_pospartido.ipynb` y ejecutá todo.
 
