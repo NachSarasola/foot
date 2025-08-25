@@ -1,2 +1,7 @@
-match_id,competition,season,matchday,date,home_team,away_team,home_goals,away_goals,venue_city
-5001001,CONMEBOL Libertadores,2025,1,2025-08-14,Libertad,River Plate,1,2,Asunción
+match_id,date,home_team_id,away_team_id,home_score,away_score,competition,season
+1,2023-07-01,1,2,4,3,Synthetic League,2023
+2,2023-07-08,1,3,2,1,Synthetic League,2023
+3,2023-07-15,1,4,1,0,Synthetic League,2023
+4,2023-07-22,2,3,0,0,Synthetic League,2023
+5,2023-07-29,2,4,0,4,Synthetic League,2023
+6,2023-08-05,3,4,3,4,Synthetic League,2023
