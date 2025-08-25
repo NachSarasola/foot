@@ -10,6 +10,12 @@ Salida:
 - report/river_libertad_report.html (2 páginas: tapa + contenido)
 - powerbi_exports/shots.csv y kpis.csv
 
+## Pipeline Pro (CLI)
+```
+py scripts/run_all_pro.py --events data/events.csv --matches data/matches.csv --output . --team-focus "Equipo B"
+```
+Genera la misma salida que el script anterior pero permite pasar rutas de entrada, directorio de salida y el equipo enfocado.
+
 ## Jupyter
 Abrí `notebooks/01_river_libertad_pospartido.ipynb` y ejecutá todo.
 
