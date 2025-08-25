@@ -3,7 +3,7 @@
 ## Cómo correr (sin Jupyter)
 ```
 py -m pip install --user pandas numpy matplotlib mplsoccer jinja2
-py scripts/run_all.py
+py scripts/run_all_pro.py
 ```
 Salida:
 - report/img/shotmap.png, xg_race.png, pass_network.png

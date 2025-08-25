@@ -144,61 +144,94 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     df_pass = df_pass[df_pass['team']==team_focus].copy()
 
     has_receiver = ('receiver' in df_pass.columns) and df_pass['receiver'].notna().any() and (df_pass['receiver']!='').any()
-    if df_pass.empty or not has_receiver:
+    if df_pass.empty:
         fig, ax = plt.subplots(figsize=(12,7)); ax.axis('off')
-        ax.text(0.5,0.5,"Sin datos suficientes para red de pases",ha='center',va='center',fontsize=14, color=COLORS['fog'])
+        ax.text(0.5,0.5,"Sin datos de pases",ha='center',va='center',fontsize=14, color=COLORS['fog'])
         fig.savefig(out_path,dpi=220,bbox_inches='tight'); plt.close(fig); return
 
-    starts = df_pass[['player','x','y']].rename(columns={'player':'name'})
-    recvs  = df_pass[['receiver','end_x','end_y']].rename(columns={'receiver':'name','end_x':'x','end_y':'y'})
-    touches = pd.concat([starts, recvs], ignore_index=True).dropna(subset=['name','x','y'])
-    locs = touches.groupby('name')[['x','y']].mean()
-    touch_count = touches.groupby('name').size().rename('touches')
+    if has_receiver:
+        starts = df_pass[['player','x','y']].rename(columns={'player':'name'})
+        recvs  = df_pass[['receiver','end_x','end_y']].rename(columns={'receiver':'name','end_x':'x','end_y':'y'})
+        touches = pd.concat([starts, recvs], ignore_index=True).dropna(subset=['name','x','y'])
+        locs = touches.groupby('name')[['x','y']].mean()
+        touch_count = touches.groupby('name').size().rename('touches')
 
-    links = (df_pass.groupby(['player','receiver']).size().reset_index(name='count').sort_values('count', ascending=False))
-    links = links[links['count']>=2]
+        links = (df_pass.groupby(['player','receiver']).size().reset_index(name='count').sort_values('count', ascending=False))
+        links = links[links['count']>=2]
 
-    from matplotlib.gridspec import GridSpec
-    fig = plt.figure(figsize=(13.5,7.5))
-    gs = GridSpec(nrows=1, ncols=2, width_ratios=[0.33,0.67], wspace=0.04, figure=fig)
-    ax_info = fig.add_subplot(gs[0,0]); ax_pitch = fig.add_subplot(gs[0,1])
-    ax_info.set_facecolor(COLORS['navy']); ax_info.axis('off')
+        from matplotlib.gridspec import GridSpec
+        fig = plt.figure(figsize=(13.5,7.5))
+        gs = GridSpec(nrows=1, ncols=2, width_ratios=[0.33,0.67], wspace=0.04, figure=fig)
+        ax_info = fig.add_subplot(gs[0,0]); ax_pitch = fig.add_subplot(gs[0,1])
+        ax_info.set_facecolor(COLORS['navy']); ax_info.axis('off')
 
-    ax_info.text(0.08,0.92,"PASSING NETWORK", color="#cfe3ff", fontsize=13, fontweight="bold", transform=ax_info.transAxes)
-    ax_info.text(0.08,0.87,"CAPTURE DATA",    color="#8aaad6", fontsize=9, transform=ax_info.transAxes)
-    m_min = int(df_pass['minute'].min()) if 'minute' in df_pass.columns else 0
-    m_max = int(df_pass['minute'].max()) if 'minute' in df_pass.columns else 90
-    ax_info.text(0.08,0.82,f"PLAYER LOCATION: AVERAGE TOUCH POSITION\n{len(df_pass)} PASSES FROM {m_min:02d}' TO {m_max:02d}'",
-                 color="#cfe3ff", fontsize=9, linespacing=1.4, transform=ax_info.transAxes)
+        ax_info.text(0.08,0.92,"PASSING NETWORK", color="#cfe3ff", fontsize=13, fontweight="bold", transform=ax_info.transAxes)
+        ax_info.text(0.08,0.87,"CAPTURE DATA",    color="#8aaad6", fontsize=9, transform=ax_info.transAxes)
+        m_min = int(df_pass['minute'].min()) if 'minute' in df_pass.columns else 0
+        m_max = int(df_pass['minute'].max()) if 'minute' in df_pass.columns else 90
+        ax_info.text(0.08,0.82,f"PLAYER LOCATION: AVERAGE TOUCH POSITION\n{len(df_pass)} PASSES FROM {m_min:02d}' TO {m_max:02d}'",
+                     color="#cfe3ff", fontsize=9, linespacing=1.4, transform=ax_info.transAxes)
 
-    t1, t2 = teams[0], teams[1]
-    xg_t1 = float(kpis.get(t1,{}).get('xg', float('nan')))
-    xg_t2 = float(kpis.get(t2,{}).get('xg', float('nan')))
-    ax_info.text(0.08,0.64,f"{xg_t1:.1f}", color="#ffffff", fontsize=26, fontweight="bold", transform=ax_info.transAxes)
-    ax_info.text(0.08,0.60,f"xG {t1}",     color="#8aaad6", fontsize=10, transform=ax_info.transAxes)
-    ax_info.text(0.08,0.52,f"{xg_t2:.1f}", color="#ffffff", fontsize=26, fontweight="bold", transform=ax_info.transAxes)
-    ax_info.text(0.08,0.48,f"xG {t2}",     color="#8aaad6", fontsize=10, transform=ax_info.transAxes)
-    ax_info.text(0.08,0.18,"● TOU C H E S      ― PASSES", color="#8aaad6", fontsize=9, transform=ax_info.transAxes)
+        t1, t2 = teams[0], teams[1]
+        xg_t1 = float(kpis.get(t1,{}).get('xg', float('nan')))
+        xg_t2 = float(kpis.get(t2,{}).get('xg', float('nan')))
+        ax_info.text(0.08,0.64,f"{xg_t1:.1f}", color="#ffffff", fontsize=26, fontweight="bold", transform=ax_info.transAxes)
+        ax_info.text(0.08,0.60,f"xG {t1}",     color="#8aaad6", fontsize=10, transform=ax_info.transAxes)
+        ax_info.text(0.08,0.52,f"{xg_t2:.1f}", color="#ffffff", fontsize=26, fontweight="bold", transform=ax_info.transAxes)
+        ax_info.text(0.08,0.48,f"xG {t2}",     color="#8aaad6", fontsize=10, transform=ax_info.transAxes)
+        ax_info.text(0.08,0.18,"● TOU C H E S      ― PASSES", color="#8aaad6", fontsize=9, transform=ax_info.transAxes)
 
-    pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
-    pitch.draw(ax=ax_pitch); add_grass_texture(ax_pitch, alpha=0.18)
+        pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
+        pitch.draw(ax=ax_pitch); add_grass_texture(ax_pitch, alpha=0.18)
 
-    for _, e in links.iterrows():
-        a,b,w = e['player'], e['receiver'], int(e['count'])
-        if a in locs.index and b in locs.index:
-            xa,ya = float(locs.loc[a,'x']), float(locs.loc[a,'y'])
-            xb,yb = float(locs.loc[b,'x']), float(locs.loc[b,'y'])
-            curved_edge(ax_pitch, xa, ya, xb, yb, weight=w, color_main=COLORS['cyan'])
+        for _, e in links.iterrows():
+            a,b,w = e['player'], e['receiver'], int(e['count'])
+            if a in locs.index and b in locs.index:
+                xa,ya = float(locs.loc[a,'x']), float(locs.loc[a,'y'])
+                xb,yb = float(locs.loc[b,'x']), float(locs.loc[b,'y'])
+                curved_edge(ax_pitch, xa, ya, xb, yb, weight=w, color_main=COLORS['cyan'])
 
-    sizes = scale_sizes(touch_count.reindex(locs.index).fillna(0).astype(int), base=160, k=25, min_size=160, max_size=900)
-    pitch.scatter(locs['x'], locs['y'], s=sizes*1.15, color='#ffffff', alpha=0.08,  zorder=3, ax=ax_pitch)
-    pitch.scatter(locs['x'], locs['y'], s=sizes,       color=COLORS['cyan'], edgecolors=COLORS['fog'],
-                  linewidth=0.8, alpha=0.95, zorder=4, ax=ax_pitch)
-    for name,row in locs.iterrows():
-        label(ax_pitch, row['x'], row['y'], str(name).replace('_',' '))
+        sizes = scale_sizes(touch_count.reindex(locs.index).fillna(0).astype(int), base=160, k=25, min_size=160, max_size=900)
+        pitch.scatter(locs['x'], locs['y'], s=sizes*1.15, color='#ffffff', alpha=0.08,  zorder=3, ax=ax_pitch)
+        pitch.scatter(locs['x'], locs['y'], s=sizes,       color=COLORS['cyan'], edgecolors=COLORS['fog'],
+                      linewidth=0.8, alpha=0.95, zorder=4, ax=ax_pitch)
+        for name,row in locs.iterrows():
+            label(ax_pitch, row['x'], row['y'], str(name).replace('_',' '))
 
-    ax_pitch.set_title(f"Passing Network — {team_focus}", loc='left', color="#cfe3ff", fontsize=13, pad=10)
-    fig.savefig(out_path, dpi=220, bbox_inches='tight'); plt.close(fig)
+        ax_pitch.set_title(f"Passing Network — {team_focus}", loc='left', color="#cfe3ff", fontsize=13, pad=10)
+        fig.savefig(out_path, dpi=220, bbox_inches='tight'); plt.close(fig)
+
+    else:
+        # Fallback network when receiver data is missing
+        pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
+        fig, ax = pitch.draw(figsize=(12,7))
+        add_grass_texture(ax, alpha=0.18)
+
+        locs = df_pass.groupby('player')[['x','y']].mean()
+        counts = df_pass['player'].value_counts()
+        players = list(counts.index)
+        links = []
+        for i, a in enumerate(players):
+            for b in players[i+1:]:
+                w = int((counts[a] + counts[b]) / 2)
+                if w >= 3:
+                    links.append((a, b, w))
+
+        for a, b, w in links:
+            if a in locs.index and b in locs.index:
+                xa, ya = float(locs.loc[a, 'x']), float(locs.loc[a, 'y'])
+                xb, yb = float(locs.loc[b, 'x']), float(locs.loc[b, 'y'])
+                curved_edge(ax, xa, ya, xb, yb, weight=w, color_main=COLORS['cyan'])
+
+        sizes = scale_sizes(counts.reindex(locs.index).fillna(0).astype(int), base=160, k=25, min_size=160, max_size=900)
+        pitch.scatter(locs['x'], locs['y'], s=sizes*1.15, color='#ffffff', alpha=0.08, zorder=3, ax=ax)
+        pitch.scatter(locs['x'], locs['y'], s=sizes, color=COLORS['cyan'], edgecolors=COLORS['fog'],
+                      linewidth=0.8, alpha=0.95, zorder=4, ax=ax)
+        for name, row in locs.iterrows():
+            label(ax, row['x'], row['y'], str(name).replace('_',' '))
+
+        ax.set_title(f"Passing Network — {team_focus}", loc='left', color="#cfe3ff", fontsize=13, pad=10)
+        fig.savefig(out_path, dpi=220, bbox_inches='tight'); plt.close(fig)
 
 team_focus = teams[1]
 passnet_path = IMG/'pass_network.png'
