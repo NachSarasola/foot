@@ -5,4 +5,9 @@ axes.labelcolor  : #E6EEF6
 xtick.color      : #E6EEF6
 ytick.color      : #E6EEF6
 text.color       : #E6EEF6
+lines.solid_capstyle : round
+legend.facecolor : none
+legend.edgecolor : none
+savefig.dpi      : 240
+axes.prop_cycle  : cycler('color', ['#5B86E5', '#00C2FF', '#FF3366'])
 font.family      : sans-serif
