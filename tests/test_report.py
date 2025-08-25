@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -175,3 +176,48 @@ def test_render_html_report_pro_creates_files(tmp_path):
     assert passnet_path.exists()
     assert pressure_path.exists()
     assert html_path.exists()
+
+
+def test_render_html_report_pro_relative_paths(tmp_path):
+    meta = {
+        "competition": "Friendly",
+        "date": "2023-01-01",
+        "venue_city": "City",
+        "home_goals": 0,
+        "away_goals": 0,
+    }
+    teams = ["Home", "Away"]
+    kpis = {t: {"shots": 0, "goals": 0, "xg": 0.0, "xt": 0.0} for t in teams}
+    ppda_vals = {t: None for t in teams}
+
+    shotmap_path = tmp_path / "shotmap.png"
+    xgrace_path = tmp_path / "xg_race.png"
+    passnet_path = tmp_path / "pass_network.png"
+    pressure_path = tmp_path / "pressure.png"
+    for p in [shotmap_path, xgrace_path, passnet_path, pressure_path]:
+        p.write_text("img")
+
+    logo_path = Path(__file__).resolve().parents[1] / "brand" / "ush_logo_dark.svg"
+    html_path = tmp_path / "report.html"
+
+    render_html_report_pro(
+        meta,
+        teams,
+        kpis,
+        ppda_vals,
+        shotmap_path,
+        xgrace_path,
+        passnet_path,
+        pressure_path,
+        logo_path,
+        html_path,
+    )
+
+    html = html_path.read_text()
+    base = html_path.parent
+
+    assert f'src="{os.path.relpath(shotmap_path, base)}"' in html
+    assert f'src="{os.path.relpath(xgrace_path, base)}"' in html
+    assert f'src="{os.path.relpath(passnet_path, base)}"' in html
+    assert f'src="{os.path.relpath(pressure_path, base)}"' in html
+    assert f'src="{os.path.relpath(logo_path, base)}"' in html

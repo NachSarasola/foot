@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Dict, Sequence, Any
 from jinja2 import Environment, FileSystemLoader
 import pandas as pd
+import os
 
 TEMPLATES_DIR = Path(__file__).resolve().parents[1] / "templates"
 
@@ -37,15 +38,21 @@ def render_html_report_pro(meta: Dict[str, Any],
     title = f"{teams[1]} @ {teams[0]} — Ida {meta['competition']} ({meta['date']}, {meta['venue_city']})"
     env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
     template = env.get_template("ush_report_pro.html")
+
+    base = out_path.parent
+
+    def _rel(p: Path) -> str:
+        return os.path.relpath(p, start=base)
+
     html = template.render(
         title=title,
-        logo=str(logo_path),
+        logo=_rel(logo_path),
         comp=meta["competition"], date=meta["date"], venue=meta["venue_city"],
         home=teams[0], away=teams[1],
         home_goals=meta.get("home_goals", ""), away_goals=meta.get("away_goals", ""),
         teams=teams, kpis=kpis, ppda=ppda_vals, team_focus=teams[1],
-        shotmap=str(shotmap_path), xgrace=str(xgrace_path),
-        passnet=str(passnet_path), pressure=str(pressure_path),
+        shotmap=_rel(shotmap_path), xgrace=_rel(xgrace_path),
+        passnet=_rel(passnet_path), pressure=_rel(pressure_path),
         year=pd.Timestamp.now().year
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
