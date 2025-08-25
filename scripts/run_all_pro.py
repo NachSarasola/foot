@@ -226,28 +226,55 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     ax_info.set_facecolor(COLORS['navy'])
     ax_info.axis('off')
 
-    ax_info.text(0.08, 0.92, "PASSING NETWORK", color="#cfe3ff", fontsize=13, fontweight="bold", transform=ax_info.transAxes)
-    ax_info.text(0.08, 0.87, "CAPTURE DATA", color="#8aaad6", fontsize=9, transform=ax_info.transAxes)
     m_min = int(df_pass['minute'].min()) if 'minute' in df_pass.columns else 0
     m_max = int(df_pass['minute'].max()) if 'minute' in df_pass.columns else 90
-    ax_info.text(
-        0.08,
-        0.82,
-        f"PLAYER LOCATION: AVERAGE TOUCH POSITION\n{len(df_pass)} PASSES FROM {m_min:02d}' TO {m_max:02d}'",
-        color="#cfe3ff",
-        fontsize=9,
-        linespacing=1.4,
-        transform=ax_info.transAxes,
-    )
-
     t1, t2 = teams[0], teams[1]
     xg_t1 = float(kpis.get(t1, {}).get('xg', float('nan')))
     xg_t2 = float(kpis.get(t2, {}).get('xg', float('nan')))
-    ax_info.text(0.08, 0.64, f"{xg_t1:.1f}", color="#ffffff", fontsize=26, fontweight="bold", transform=ax_info.transAxes)
-    ax_info.text(0.08, 0.60, f"xG {t1}", color="#8aaad6", fontsize=10, transform=ax_info.transAxes)
-    ax_info.text(0.08, 0.52, f"{xg_t2:.1f}", color="#ffffff", fontsize=26, fontweight="bold", transform=ax_info.transAxes)
-    ax_info.text(0.08, 0.48, f"xG {t2}", color="#8aaad6", fontsize=10, transform=ax_info.transAxes)
-    ax_info.text(0.08, 0.18, "● TOU C H E S      ― PASSES", color="#8aaad6", fontsize=9, transform=ax_info.transAxes)
+
+    def _layout_text(ax, blocks, x=0.08, top=0.95, bottom=0.05, line_spacing=0.05, block_spacing=0.06):
+        total_lines = sum(len(b) for b in blocks)
+        needed = total_lines * line_spacing + (len(blocks) - 1) * block_spacing
+        available = top - bottom
+        if needed > available:
+            scale = available / needed
+            line_spacing *= scale
+            block_spacing *= scale
+        y = top
+        for i, block in enumerate(blocks):
+            for text, style in block:
+                ax.annotate(
+                    text,
+                    xy=(x, y),
+                    xycoords='axes fraction',
+                    ha='left',
+                    va='top',
+                    **style,
+                )
+                y -= line_spacing
+            if i < len(blocks) - 1:
+                y -= block_spacing
+
+    text_blocks = [
+        [
+            ("PASSING NETWORK", {"color": "#cfe3ff", "fontsize": 13, "fontweight": "bold"}),
+            ("CAPTURE DATA", {"color": "#8aaad6", "fontsize": 9}),
+            (f"PLAYER LOCATION: AVERAGE TOUCH POSITION\n{len(df_pass)} PASSES FROM {m_min:02d}' TO {m_max:02d}'",
+             {"color": "#cfe3ff", "fontsize": 9, "linespacing": 1.4}),
+        ],
+        [
+            (f"{xg_t1:.1f}", {"color": "#ffffff", "fontsize": 26, "fontweight": "bold"}),
+            (f"xG {t1}", {"color": "#8aaad6", "fontsize": 10}),
+        ],
+        [
+            (f"{xg_t2:.1f}", {"color": "#ffffff", "fontsize": 26, "fontweight": "bold"}),
+            (f"xG {t2}", {"color": "#8aaad6", "fontsize": 10}),
+        ],
+        [
+            ("● TOU C H E S      ― PASSES", {"color": "#8aaad6", "fontsize": 9}),
+        ],
+    ]
+    _layout_text(ax_info, text_blocks)
 
     pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
     pitch.draw(ax=ax_pitch)
