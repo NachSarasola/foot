@@ -198,10 +198,24 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     plt.close(fig)
 
 
-def process_match(events, meta, output_dir, brand_path, team_focus=None):
-    report_dir = output_dir / 'report'
-    img_dir = report_dir / 'img'
-    pbi_dir = output_dir / 'powerbi_exports'
+def process_match(
+    events,
+    meta,
+    output_dir,
+    brand_path,
+    team_focus=None,
+    report_name="river_libertad_report.html",
+    img_dir="report/img",
+    pbi_dir="powerbi_exports",
+):
+    img_dir = Path(img_dir)
+    if not img_dir.is_absolute():
+        img_dir = output_dir / img_dir
+    pbi_dir = Path(pbi_dir)
+    if not pbi_dir.is_absolute():
+        pbi_dir = output_dir / pbi_dir
+
+    report_dir = img_dir.parent
     for p in [report_dir, img_dir, pbi_dir]:
         p.mkdir(parents=True, exist_ok=True)
 
@@ -229,23 +243,27 @@ def process_match(events, meta, output_dir, brand_path, team_focus=None):
 
     ppda_vals = {t: ppda(events, t) for t in teams}
 
-    shotmap_path = img_dir / 'shotmap.png'
+    shotmap_path = img_dir / "shotmap.png"
     draw_shot_map_pro(shots, teams, meta, shotmap_path)
     print("Guardado:", shotmap_path)
 
-    xgrace_path = img_dir / 'xg_race.png'
+    xgrace_path = img_dir / "xg_race.png"
     draw_xg_race_pro(shots, teams, meta, xgrace_path)
     print("Guardado:", xgrace_path)
 
     focus = team_focus if team_focus is not None else teams[1]
-    passnet_path = img_dir / 'pass_network.png'
+    passnet_path = img_dir / "pass_network.png"
     draw_pass_network_pro(events, teams, meta, kpis, focus, passnet_path)
     print("Guardado:", passnet_path)
 
-    shots[['match_id', 'team', 'minute', 'x', 'y', 'is_goal', 'xg']].to_csv(pbi_dir / 'shots.csv', index=False)
-    pd.DataFrame([{'team': t, **kpis[t], 'ppda': ppda_vals[t]} for t in teams]).to_csv(pbi_dir / 'kpis.csv', index=False)
+    shots[['match_id', 'team', 'minute', 'x', 'y', 'is_goal', 'xg']].to_csv(
+        pbi_dir / "shots.csv", index=False
+    )
+    pd.DataFrame([
+        {"team": t, **kpis[t], "ppda": ppda_vals[t]} for t in teams
+    ]).to_csv(pbi_dir / "kpis.csv", index=False)
 
-    report_path = report_dir / 'river_libertad_report.html'
+    report_path = report_dir / report_name
     render_html_report_pro(
         meta,
         teams,
@@ -260,7 +278,16 @@ def process_match(events, meta, output_dir, brand_path, team_focus=None):
     print("Listo →", report_path)
 
 
-def main(events_path, matches_path, output_dir, match_id=None, team_focus=None):
+def main(
+    events_path,
+    matches_path,
+    output_dir,
+    match_id=None,
+    team_focus=None,
+    report_name="river_libertad_report.html",
+    img_dir="report/img",
+    pbi_dir="powerbi_exports",
+):
     ROOT = Path(__file__).resolve().parents[1]
     BRAND = ROOT / 'brand'
 
@@ -286,7 +313,16 @@ def main(events_path, matches_path, output_dir, match_id=None, team_focus=None):
         else:
             events = events_df.copy()
         match_out_dir = output_dir / str(mid if mid is not None else _)
-        process_match(events, meta, match_out_dir, BRAND, team_focus)
+        process_match(
+            events,
+            meta,
+            match_out_dir,
+            BRAND,
+            team_focus,
+            report_name,
+            img_dir,
+            pbi_dir,
+        )
 
 
 if __name__ == "__main__":
@@ -296,6 +332,26 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True, help="Output directory for generated files")
     parser.add_argument("--team-focus", help="Team to highlight in passing network")
     parser.add_argument("--match-id", help="Match ID to process (processes all if omitted)")
+    parser.add_argument("--report-name", default="river_libertad_report.html", help="Filename for HTML report")
+    parser.add_argument(
+        "--img-dir",
+        default="report/img",
+        help="Directory for generated images (relative to match output dir)",
+    )
+    parser.add_argument(
+        "--pbi-dir",
+        default="powerbi_exports",
+        help="Directory for PowerBI exports (relative to match output dir)",
+    )
     args = parser.parse_args()
-    main(args.events, args.matches, args.output, args.match_id, args.team_focus)
+    main(
+        args.events,
+        args.matches,
+        args.output,
+        args.match_id,
+        args.team_focus,
+        args.report_name,
+        args.img_dir,
+        args.pbi_dir,
+    )
 
