@@ -12,7 +12,8 @@ from mplsoccer import Pitch
 # Estilo y helpers
 from ush_style import (
     COLORS, set_ush_theme, add_grass_texture, scale_sizes, label,
-    curved_edge, annotate_goals_scatter, annotate_goals_on_xg
+    curved_edge, annotate_goals_scatter, annotate_goals_on_xg,
+    annotate_score, shot_marker_kwargs, shot_on_target_mask
 )
 from ush_report import render_html_report_pro
 
@@ -54,18 +55,38 @@ def draw_shot_map_pro(shots_df, teams, meta, out_path):
     add_grass_texture(ax, alpha=0.18)
 
     for t in teams:
-        sub = shots_df.loc[shots_df['team'] == t, ['x', 'y', 'xg', 'is_goal', 'minute', 'player']].dropna(subset=['x', 'y'])
+        sub = shots_df.loc[shots_df['team'] == t].dropna(subset=['x', 'y']).copy()
         if sub.empty:
             continue
+        on_mask = shot_on_target_mask(sub)
         sizes = scale_sizes(sub['xg'].fillna(0.06) * 100, base=80, k=15, min_size=40, max_size=520)
-        pitch.scatter(sub['x'], sub['y'], s=sizes, color=team_color[t], edgecolors='#ffffff',
-                      linewidth=0.8, alpha=0.90, label=t, ax=ax, zorder=4)
+        if (~on_mask).any():
+            pitch.scatter(
+                sub.loc[~on_mask, 'x'],
+                sub.loc[~on_mask, 'y'],
+                s=sizes[~on_mask],
+                ax=ax,
+                zorder=4,
+                label=t,
+                **shot_marker_kwargs(False, team_color[t]),
+            )
+        if on_mask.any():
+            pitch.scatter(
+                sub.loc[on_mask, 'x'],
+                sub.loc[on_mask, 'y'],
+                s=sizes[on_mask],
+                ax=ax,
+                zorder=4,
+                label=None,
+                **shot_marker_kwargs(True, team_color[t]),
+            )
         annotate_goals_scatter(ax, sub)
 
     leg = ax.legend(loc='lower left', frameon=False, fontsize=10)
     if leg is not None and leg.get_title() is not None:
         leg.get_title().set_color(COLORS['fog'])
     ax.set_title(f"Shot Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
+    annotate_score(ax, teams, meta.get('home_goals', 0), meta.get('away_goals', 0))
 
     fig.savefig(out_path, dpi=220, bbox_inches='tight')
     plt.close(fig)
@@ -143,6 +164,15 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     links = (df_pass.groupby(['player', 'receiver']).size()
              .reset_index(name='count').sort_values('count', ascending=False))
     links = links[links['count'] >= 2]
+    prog_mask = (df_pass.get('end_x') - df_pass.get('x')) > 10
+    prog_links = (
+        df_pass[prog_mask]
+        .groupby(['player', 'receiver'])
+        .size()
+        .reset_index(name='prog_count')
+    )
+    links = links.merge(prog_links, on=['player', 'receiver'], how='left')
+    links['prog_count'] = links.get('prog_count', 0).fillna(0).astype(int)
 
     from matplotlib.gridspec import GridSpec
     fig = plt.figure(figsize=(13.5, 7.5))
@@ -181,10 +211,13 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
 
     for _, e in links.iterrows():
         a, b, w = e['player'], e['receiver'], int(e['count'])
+        prog = int(e.get('prog_count', 0)) > 0
         if a in locs.index and b in locs.index:
             xa, ya = float(locs.loc[a, 'x']), float(locs.loc[a, 'y'])
             xb, yb = float(locs.loc[b, 'x']), float(locs.loc[b, 'y'])
-            curved_edge(ax_pitch, xa, ya, xb, yb, weight=w, color_main=COLORS['cyan'])
+            color = COLORS['goal'] if prog else COLORS['cyan']
+            weight = w + 1 if prog else w
+            curved_edge(ax_pitch, xa, ya, xb, yb, weight=weight, color_main=color)
 
     sizes = scale_sizes(touch_count.reindex(locs.index).fillna(0).astype(int), base=160, k=25, min_size=160, max_size=900)
     pitch.scatter(locs['x'], locs['y'], s=sizes * 1.15, color='#ffffff', alpha=0.08, zorder=3, ax=ax_pitch)

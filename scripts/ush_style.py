@@ -187,6 +187,81 @@ def curved_edge(ax, x_start: float, y_start: float, x_end: float, y_end: float,
     ax.add_patch(patch)
 
 
+def shot_on_target_mask(df):
+    """Return a boolean mask for shots on target.
+
+    The function searches common column names that may indicate whether a
+    shot was on target.  If none are found it falls back to using the goal
+    column, assuming that only goals were on target.
+    """
+    for col in ("is_on_target", "shot_on_target", "on_target"):
+        if col in df.columns:
+            return df[col].fillna(0).astype(int) == 1
+    if "shot_outcome" in df.columns:
+        return df["shot_outcome"].str.lower().isin(["on target", "goal"])
+    return df.get("is_goal", 0) == 1
+
+
+def shot_marker_kwargs(on_target: bool, color: str) -> dict:
+    """Style parameters for plotting shots based on shot type.
+
+    Parameters
+    ----------
+    on_target : bool
+        Whether the shot was on target.
+    color : str
+        Base colour associated with the shooting team.
+
+    Returns
+    -------
+    dict
+        Keyword arguments suitable for ``Axes.scatter``.
+    """
+    marker = "s" if on_target else "o"
+    alpha = 0.95 if on_target else 0.7
+    lw = 1.0 if on_target else 0.8
+    return {
+        "marker": marker,
+        "color": color,
+        "edgecolors": COLORS["fog"],
+        "linewidth": lw,
+        "alpha": alpha,
+    }
+
+
+def annotate_score(ax, teams, home_goals: int, away_goals: int,
+                   position=(0.5, 1.02), color: str | None = None,
+                   fontsize: int = 12) -> None:
+    """Annotate the final score above an axes.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Target axes.
+    teams : list-like
+        Pair of team names ``[home, away]``.
+    home_goals, away_goals : int
+        Goal totals for each team.
+    position : tuple, default ``(0.5, 1.02)``
+        Axes fraction coordinates of the annotation.
+    color : str, optional
+        Text colour, defaults to ``COLORS['fog']``.
+    fontsize : int, default 12
+        Font size of the annotation text.
+    """
+    text = f"{teams[0]} {home_goals} - {away_goals} {teams[1]}"
+    ax.text(
+        position[0],
+        position[1],
+        text,
+        transform=ax.transAxes,
+        ha="center",
+        va="bottom",
+        color=color or COLORS["fog"],
+        fontsize=fontsize,
+    )
+
+
 def annotate_goals_scatter(ax, shots_df, marker_size: float = 200,
                            color: str | None = None) -> None:
     """Highlight goals on a shot map scatter plot.
