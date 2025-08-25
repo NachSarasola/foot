@@ -55,6 +55,7 @@ footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
           <div>Tiros: {{ kpis[t].shots }}</div>
           <div>Goles: {{ kpis[t].goals }}</div>
           <div>xG: {{ "%.2f"|format(kpis[t].xg) }}</div>
+          <div>xT: {{ "%.2f"|format(kpis[t].xt) }}</div>
           <div>PPDA: {{ ppda[t] if ppda[t] is not none else "—" }}</div>
         </div>
         {% endfor %}
@@ -72,6 +73,10 @@ footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
         <div>
           <h3 style="margin:4px 0 8px 0">xG acumulado</h3>
           <img src="{{ xgrace }}" alt="xG Race">
+        </div>
+        <div>
+          <h3 style="margin:4px 0 8px 0">Mapa de presión</h3>
+          <img src="{{ pressure }}" alt="Pressure Map">
         </div>
         <div style="grid-column:1/-1">
           <h3 style="margin:8px 0 8px 0">Red de pases — {{ team_focus }}</h3>

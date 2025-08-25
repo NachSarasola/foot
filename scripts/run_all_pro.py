@@ -38,6 +38,26 @@ def ppda(df, team):
     return round(float(opp) / float(our), 2) if our else None
 
 
+def xt_lite(row):
+    """Estimate xT gain of a single action using xg_lite as proxy."""
+    start = xg_lite({'x': row.get('x', 0), 'y': row.get('y', 0)})
+    end = xg_lite({'x': row.get('end_x', row.get('x', 0)), 'y': row.get('end_y', row.get('y', 0))})
+    return max(0.0, end - start)
+
+
+def calculate_xt(df, teams):
+    """Return total xT per team based on pass progression."""
+    req = {'team', 'is_pass', 'x', 'y', 'end_x', 'end_y'}
+    if not req.issubset(df.columns):
+        return {t: 0.0 for t in teams}
+    passes = df[df['is_pass'] == 1].dropna(subset=['x', 'y', 'end_x', 'end_y']).copy()
+    if passes.empty:
+        return {t: 0.0 for t in teams}
+    passes['xt'] = passes.apply(xt_lite, axis=1)
+    xt_team = passes.groupby('team')['xt'].sum().to_dict()
+    return {t: round(float(xt_team.get(t, 0.0)), 2) for t in teams}
+
+
 # ====== SHOT MAP — PRO ======
 def draw_shot_map_pro(shots_df, teams, meta, out_path):
     if shots_df is None or shots_df.empty:
@@ -231,6 +251,42 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     plt.close(fig)
 
 
+def draw_pressure_map(events_df, teams, meta, out_path):
+    df = events_df.copy()
+    mask = (
+        (df.get('is_def_action', 0) == 1)
+        & df['x'].notna()
+        & df['y'].notna()
+        & (df.get('x') >= 60)
+    )
+    df = df[mask]
+    if df.empty:
+        fig, ax = plt.subplots(figsize=(10, 7))
+        ax.axis('off')
+        ax.text(0.5, 0.5, "Sin acciones defensivas altas", ha='center', va='center', fontsize=14)
+        fig.savefig(out_path, dpi=220, bbox_inches='tight')
+        plt.close(fig)
+        return
+
+    team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
+    pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
+    fig, ax = pitch.draw(figsize=(10, 7))
+    add_grass_texture(ax, alpha=0.18)
+
+    for t in teams:
+        sub = df[df['team'] == t]
+        if sub.empty:
+            continue
+        pitch.scatter(sub['x'], sub['y'], ax=ax, s=80, color=team_color[t], alpha=0.9, label=t)
+
+    leg = ax.legend(loc='lower left', frameon=False, fontsize=10)
+    if leg is not None and leg.get_title() is not None:
+        leg.get_title().set_color(COLORS['fog'])
+    ax.set_title(f"Pressure Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
+    fig.savefig(out_path, dpi=220, bbox_inches='tight')
+    plt.close(fig)
+
+
 def process_match(
     events,
     meta,
@@ -274,6 +330,10 @@ def process_match(
             'xg': float(round(sub.get('xg', 0).sum(), 2)),
         }
 
+    xt_vals = calculate_xt(events, teams)
+    for t in teams:
+        kpis[t]['xt'] = xt_vals.get(t, 0.0)
+
     ppda_vals = {t: ppda(events, t) for t in teams}
 
     shotmap_path = img_dir / "shotmap.png"
@@ -288,6 +348,10 @@ def process_match(
     passnet_path = img_dir / "pass_network.png"
     draw_pass_network_pro(events, teams, meta, kpis, focus, passnet_path)
     print("Guardado:", passnet_path)
+
+    pressure_path = img_dir / "pressure_map.png"
+    draw_pressure_map(events, teams, meta, pressure_path)
+    print("Guardado:", pressure_path)
 
     shots[['match_id', 'team', 'minute', 'x', 'y', 'is_goal', 'xg']].to_csv(
         pbi_dir / "shots.csv", index=False
@@ -305,6 +369,7 @@ def process_match(
         shotmap_path,
         xgrace_path,
         passnet_path,
+        pressure_path,
         brand_path / 'ush_logo_dark.svg',
         report_path,
     )

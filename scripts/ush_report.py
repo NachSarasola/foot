@@ -25,6 +25,7 @@ def render_html_report_pro(meta: Dict[str, Any],
                            shotmap_path: Path,
                            xgrace_path: Path,
                            passnet_path: Path,
+                           pressure_path: Path,
                            logo_path: Path,
                            out_path: Path) -> None:
     """Renderiza el informe HTML Pro (portada + contenido) con branding Ush."""
@@ -43,7 +44,8 @@ def render_html_report_pro(meta: Dict[str, Any],
         home=teams[0], away=teams[1],
         home_goals=meta.get("home_goals", ""), away_goals=meta.get("away_goals", ""),
         teams=teams, kpis=kpis, ppda=ppda_vals, team_focus=teams[1],
-        shotmap=str(shotmap_path), xgrace=str(xgrace_path), passnet=str(passnet_path),
+        shotmap=str(shotmap_path), xgrace=str(xgrace_path),
+        passnet=str(passnet_path), pressure=str(pressure_path),
         year=pd.Timestamp.now().year
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
