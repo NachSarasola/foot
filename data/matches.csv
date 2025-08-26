@@ -1,7 +1,7 @@
-match_id,date,home_team_id,away_team_id,home_score,away_score,competition,season
-1,2023-07-01,1,2,4,3,Synthetic League,2023
-2,2023-07-08,1,3,2,1,Synthetic League,2023
-3,2023-07-15,1,4,1,0,Synthetic League,2023
-4,2023-07-22,2,3,0,0,Synthetic League,2023
-5,2023-07-29,2,4,0,4,Synthetic League,2023
-6,2023-08-05,3,4,3,4,Synthetic League,2023
+match_id,date,home_team_id,away_team_id,home_score,away_score,competition,season,venue_city
+1,2023-07-01,1,2,4,3,Synthetic League,2023,City 1
+2,2023-07-08,1,3,2,1,Synthetic League,2023,City 1
+3,2023-07-15,1,4,1,0,Synthetic League,2023,City 1
+4,2023-07-22,2,3,0,0,Synthetic League,2023,City 2
+5,2023-07-29,2,4,0,4,Synthetic League,2023,City 2
+6,2023-08-05,3,4,3,4,Synthetic League,2023,City 3

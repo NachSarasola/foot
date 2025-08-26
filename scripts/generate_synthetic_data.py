@@ -52,6 +52,7 @@ def generate_matches(teams: pd.DataFrame) -> pd.DataFrame:
     dates = pd.date_range("2023-07-01", periods=len(pairs), freq="7D")
     matches: list[dict[str, object]] = []
     for match_id, (date, (home, away)) in enumerate(zip(dates, pairs), 1):
+        venue_city = teams.loc[teams["team_id"] == home, "city"].iloc[0]
         matches.append(
             {
                 "match_id": match_id,
@@ -62,6 +63,7 @@ def generate_matches(teams: pd.DataFrame) -> pd.DataFrame:
                 "away_score": int(RNG.integers(0, 5)),
                 "competition": "Synthetic League",
                 "season": "2023",
+                "venue_city": venue_city,
             }
         )
     return pd.DataFrame(matches)
@@ -87,8 +89,11 @@ def generate_zones() -> pd.DataFrame:
     return pd.DataFrame(zones)
 
 
-def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFrame:
+def generate_events(
+    matches: pd.DataFrame, players: pd.DataFrame, teams: pd.DataFrame
+) -> pd.DataFrame:
     """Return a synthetic event stream with coverage of all flags."""
+    team_lookup = teams.set_index("team_id")["name"]
     events: list[dict[str, object]] = []
     event_id = 1
     set_pieces = ["corner", "free_kick", "throw_in", "penalty"]
@@ -133,11 +138,15 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
             possession_id = int(event_id // 5)
             x_norm = x / 120
             y_norm = y / 80
+            team_name = str(team_lookup[team_id])
+            is_pass = int(event_type == "pass")
+            is_def_action = int(event_type in {"pressure", "save", "goalkeeper_action"})
             events.append(
                 {
                     "event_id": event_id,
                     "match_id": int(match["match_id"]),
                     "team_id": team_id,
+                    "team": team_name,
                     "player_id": player_id,
                     "period": period,
                     "minute": minute,
@@ -162,6 +171,8 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
                     "possession_id": possession_id,
                     "x_norm": x_norm,
                     "y_norm": y_norm,
+                    "is_pass": is_pass,
+                    "is_def_action": is_def_action,
                 }
             )
             event_id += 1
@@ -181,6 +192,7 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
         "event_id": event_id,
         "match_id": int(matches.iloc[0]["match_id"]),
         "team_id": int(matches.iloc[0]["home_team_id"]),
+        "team": str(team_lookup[int(matches.iloc[0]["home_team_id"])]),
         "player_id": int(
             players.loc[players["team_id"] == matches.iloc[0]["home_team_id"], "player_id"].iloc[0]
         ),
@@ -207,6 +219,8 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
         "possession_id": 0,
         "x_norm": 50.0 / 120,
         "y_norm": 40.0 / 80,
+        "is_pass": 1,
+        "is_def_action": 0,
     }
     for sp in set_pieces:
         if sp not in present:
@@ -214,6 +228,10 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
             extra["event_id"] = event_id
             event_id += 1
             extra["set_piece_type"] = sp
+            extra["is_pass"] = int(extra["event_type"] == "pass")
+            extra["is_def_action"] = int(
+                extra["event_type"] in {"pressure", "save", "goalkeeper_action"}
+            )
             events.append(extra)
     # ensure each event type present
     present_types = {e["event_type"] for e in events}
@@ -229,6 +247,8 @@ def generate_events(matches: pd.DataFrame, players: pd.DataFrame) -> pd.DataFram
                 extra["pressure"] = 1
             if et in {"save", "goalkeeper_action"}:
                 extra["keeper_action"] = 1
+            extra["is_pass"] = int(et == "pass")
+            extra["is_def_action"] = int(et in {"pressure", "save", "goalkeeper_action"})
             events.append(extra)
     return pd.DataFrame(events)
 
@@ -240,7 +260,7 @@ def main() -> None:
     players = generate_players(teams)
     matches = generate_matches(teams)
     zones = generate_zones()
-    events = generate_events(matches, players)
+    events = generate_events(matches, players, teams)
     teams.to_csv(DATA_DIR / "teams.csv", index=False)
     players.to_csv(DATA_DIR / "players.csv", index=False)
     matches.to_csv(DATA_DIR / "matches.csv", index=False)

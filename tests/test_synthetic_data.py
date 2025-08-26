@@ -27,6 +27,8 @@ def test_events_flags_and_ranges():
         "possession_id",
         "x_norm",
         "y_norm",
+        "is_pass",
+        "is_def_action",
     }
     assert required.issubset(events.columns)
     assert events["x"].between(0, 120).all()
@@ -35,7 +37,15 @@ def test_events_flags_and_ranges():
     assert events["y_norm"].between(0, 1).all()
     assert (events["x_norm"].sub(events["x"] / 120).abs() < 1e-9).all()
     assert (events["y_norm"].sub(events["y"] / 80).abs() < 1e-9).all()
-    for col in ["pass_switch", "carry_progressive", "pressure", "regain", "keeper_action"]:
+    for col in [
+        "pass_switch",
+        "carry_progressive",
+        "pressure",
+        "regain",
+        "keeper_action",
+        "is_pass",
+        "is_def_action",
+    ]:
         assert events[col].isin([0, 1]).all()
         assert events[col].sum() > 0
         assert events[col].sum() < len(events)
@@ -57,6 +67,8 @@ def test_matches_players_teams_links():
     assert players["team_id"].isin(teams["team_id"]).all()
     assert matches["home_score"].ge(0).all()
     assert matches["away_score"].ge(0).all()
+    assert "venue_city" in matches.columns
+    assert matches["venue_city"].ne("").all()
 
 
 def test_zones_bounds():
