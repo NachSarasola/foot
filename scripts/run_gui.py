@@ -1,8 +1,8 @@
 """Tkinter GUI for generating Ush Analytics pro reports.
 
-Allows selecting event and match CSV files, choosing a match, 
+Allows selecting event and match CSV files, choosing a match,
 selecting an output folder and running
-:func:`run_all_pro.generate_report_for_match`.
+:func:`run_all_pro.run_pipeline`.
 """
 
 import tkinter as tk
@@ -69,13 +69,15 @@ def main():
 
     def generate_report():
         """Run report generation and show status."""
-        if not (events_path.get() and matches_df is not None and output_dir.get()):
+        if not (events_path.get() and matches_path.get() and matches_df is not None and output_dir.get()):
             messagebox.showerror("Error", "Seleccione archivos y carpeta de salida")
             return
         try:
-            events_df = pd.read_csv(events_path.get())
-            result = run_all_pro.generate_report_for_match(
-                events_df, matches_df, output_dir.get(), match_id=match_map.get(match_var.get())
+            result = run_all_pro.run_pipeline(
+                events_path.get(),
+                matches_path.get(),
+                output_dir.get(),
+                match_id=match_map.get(match_var.get()),
             )
             report_path = result[0].get("report") if result else ""
             status_var.set(f"Reporte generado en {report_path}")

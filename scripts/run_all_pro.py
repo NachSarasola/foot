@@ -503,6 +503,39 @@ def generate_report_for_match(
     return results
 
 
+def run_pipeline(events_path, matches_path, out_dir, match_id=None, team_focus=None):
+    """Run the pro report pipeline from CSV file paths.
+
+    Parameters
+    ----------
+    events_path : str or Path
+        Ruta al CSV de eventos.
+    matches_path : str or Path
+        Ruta al CSV de partidos.
+    out_dir : str or Path
+        Directorio donde se generarán los archivos.
+    match_id : optional
+        Identificador del partido a procesar. Si es ``None`` se procesan todos.
+    team_focus : optional
+        Equipo a resaltar en la red de pases.
+
+    Returns
+    -------
+    list of dict
+        Información con rutas a archivos generados por partido.
+    """
+
+    events_df = pd.read_csv(Path(events_path))
+    matches_df = pd.read_csv(Path(matches_path))
+    return generate_report_for_match(
+        events_df,
+        matches_df,
+        Path(out_dir),
+        match_id=match_id,
+        team_focus=team_focus,
+    )
+
+
 def main():
     """CLI for generating pro reports.
 
@@ -517,17 +550,6 @@ def main():
     parser.add_argument("--output", help="Output directory for generated files (required unless --demo)")
     parser.add_argument("--team-focus", help="Team to highlight in passing network")
     parser.add_argument("--match-id", help="Match ID to process (processes all if omitted)")
-    parser.add_argument("--report-name", default="river_libertad_report.html", help="Filename for HTML report")
-    parser.add_argument(
-        "--img-dir",
-        default="report/img",
-        help="Directory for generated images (relative to match output dir)",
-    )
-    parser.add_argument(
-        "--pbi-dir",
-        default="powerbi_exports",
-        help="Directory for PowerBI exports (relative to match output dir)",
-    )
     parser.add_argument(
         "--demo",
         action="store_true",
@@ -554,18 +576,12 @@ def main():
     if not (args.events and args.matches and args.output):
         parser.error("--events, --matches and --output are required unless --demo is used")
 
-    events_df = pd.read_csv(Path(args.events))
-    matches_df = pd.read_csv(Path(args.matches))
-
-    generate_report_for_match(
-        events_df,
-        matches_df,
-        Path(args.output),
-        args.match_id,
-        args.team_focus,
-        args.report_name,
-        args.img_dir,
-        args.pbi_dir,
+    run_pipeline(
+        args.events,
+        args.matches,
+        args.output,
+        match_id=args.match_id,
+        team_focus=args.team_focus,
     )
 
 
