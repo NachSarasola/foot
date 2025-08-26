@@ -96,13 +96,15 @@ def calculate_xt(df, teams):
 
 
 # ====== SHOT MAP — PRO ======
-def draw_shot_map_pro(shots_df, teams, meta, out_path):
+def draw_shot_map_pro(shots_df, teams, meta, out_path, *, show_title: bool = True):
     """Draw shot map for both teams.
 
     Parameters
     ----------
     shots_df : DataFrame
         Shot events. Must contain at least ``x`` and ``y`` columns.
+    show_title : bool, default ``True``
+        If ``True`` include a descriptive title above the plot.
 
     Raises
     ------
@@ -118,24 +120,30 @@ def draw_shot_map_pro(shots_df, teams, meta, out_path):
 
     team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
 
-    pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
+    pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'],
+                  line_color=COLORS['fog'], linewidth=1)
     fig, ax = pitch.draw()
     fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
+    fig.subplots_adjust(left=0.04, right=0.96, top=0.92, bottom=0.04)
     add_grass_texture(ax, alpha=0.18)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_axis_off()
 
     for t in teams:
         sub = shots_df.loc[shots_df['team'] == t].dropna(subset=['x', 'y']).copy()
         if sub.empty:
             continue
         on_mask = shot_on_target_mask(sub)
-        sizes = scale_sizes(sub['xg'].fillna(0.06) * 100, base=40, k=7.5, min_size=20, max_size=260)
+        sizes = scale_sizes(sub['xg'].fillna(0.06) * 100, base=40,
+                            k=7.5, min_size=40, max_size=520)
         if (~on_mask).any():
             pitch.scatter(
                 sub.loc[~on_mask, 'x'],
                 sub.loc[~on_mask, 'y'],
                 s=sizes[~on_mask],
                 ax=ax,
-                zorder=4,
+                zorder=2,
                 label=t,
                 **shot_marker_kwargs(False, team_color[t]),
             )
@@ -145,16 +153,30 @@ def draw_shot_map_pro(shots_df, teams, meta, out_path):
                 sub.loc[on_mask, 'y'],
                 s=sizes[on_mask],
                 ax=ax,
-                zorder=4,
+                zorder=2,
                 label=None,
                 **shot_marker_kwargs(True, team_color[t]),
             )
         annotate_goals_scatter(ax, sub)
 
-    leg = ax.legend(loc='lower left', frameon=False, fontsize=10)
+    leg = ax.legend(
+        loc='upper left',
+        bbox_to_anchor=(0, 1.02),
+        frameon=False,
+        fontsize=10,
+        handlelength=1,
+        handletextpad=0.4,
+        borderpad=0.2,
+    )
     if leg is not None and leg.get_title() is not None:
         leg.get_title().set_color(COLORS['fog'])
-    ax.set_title(f"Shot Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
+    if show_title:
+        ax.set_title(
+            f"Shot Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})",
+            loc='left',
+            pad=10,
+            fontsize=13,
+        )
     annotate_score(ax, teams, meta.get('home_goals', 0), meta.get('away_goals', 0))
 
     save_fig_pro(fig, out_path)
