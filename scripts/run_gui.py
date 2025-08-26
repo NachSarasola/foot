@@ -81,6 +81,9 @@ def main():
         if not path:
             return
         matches_df = pd.read_csv(path)
+        teams = pd.read_csv(data_dir / "teams.csv").set_index("team_id")["name"]
+        matches_df["home_team"] = matches_df["home_team_id"].map(teams)
+        matches_df["away_team"] = matches_df["away_team_id"].map(teams)
         match_map.clear()
         options = []
         for _, row in matches_df.iterrows():
