@@ -35,6 +35,25 @@ def render_html_report_pro(meta: Dict[str, Any],
         if k not in meta:
             raise KeyError(f"meta['{k}'] faltante")
 
+    # validate KPI structure for each team
+    kpi_required = {"shots", "goals", "xg", "xt"}
+    for t in teams:
+        if t not in kpis:
+            raise KeyError(f"kpis['{t}'] faltante")
+        missing = kpi_required.difference(kpis[t].keys())
+        if missing:
+            raise KeyError(f"kpis['{t}'] faltan claves: {', '.join(sorted(missing))}")
+
+    # ensure all visual assets exist before rendering
+    for name, path in [
+        ("shotmap_path", shotmap_path),
+        ("xgrace_path", xgrace_path),
+        ("passnet_path", passnet_path),
+        ("pressure_path", pressure_path),
+    ]:
+        if not path.exists():
+            raise FileNotFoundError(f"{name} no existe: {path}")
+
     title = f"{teams[1]} @ {teams[0]} — Ida {meta['competition']} ({meta['date']}, {meta['venue_city']})"
     env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
     template = env.get_template("ush_report_pro.html")
