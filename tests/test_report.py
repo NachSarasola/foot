@@ -4,6 +4,7 @@ import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "scripts"))
 from ush_report import render_html_report_pro
@@ -221,3 +222,69 @@ def test_render_html_report_pro_relative_paths(tmp_path):
     assert f'src="{os.path.relpath(passnet_path, base)}"' in html
     assert f'src="{os.path.relpath(pressure_path, base)}"' in html
     assert f'src="{os.path.relpath(logo_path, base)}"' in html
+
+
+def test_render_html_report_pro_missing_asset(tmp_path):
+    meta = {"competition": "Friendly", "date": "2023-01-01", "venue_city": "City"}
+    teams = ["Home", "Away"]
+    kpis = {t: {"shots": 0, "goals": 0, "xg": 0.0, "xt": 0.0} for t in teams}
+    ppda_vals = {t: None for t in teams}
+
+    shotmap_path = tmp_path / "shotmap.png"  # intentionally not created
+    xgrace_path = tmp_path / "xg.png"
+    passnet_path = tmp_path / "pass.png"
+    pressure_path = tmp_path / "press.png"
+    for p in [xgrace_path, passnet_path, pressure_path]:
+        p.write_text("img")
+
+    logo_path = Path(__file__).resolve().parents[1] / "brand" / "ush_logo_dark.svg"
+    out_path = tmp_path / "report.html"
+
+    with pytest.raises(FileNotFoundError):
+        render_html_report_pro(
+            meta,
+            teams,
+            kpis,
+            ppda_vals,
+            shotmap_path,
+            xgrace_path,
+            passnet_path,
+            pressure_path,
+            logo_path,
+            out_path,
+        )
+
+
+def test_render_html_report_pro_missing_kpi_key(tmp_path):
+    meta = {"competition": "Friendly", "date": "2023-01-01", "venue_city": "City"}
+    teams = ["Home", "Away"]
+    # remove 'xt' from home team kpis to trigger validation
+    kpis = {
+        "Home": {"shots": 0, "goals": 0, "xg": 0.0},
+        "Away": {"shots": 0, "goals": 0, "xg": 0.0, "xt": 0.0},
+    }
+    ppda_vals = {t: None for t in teams}
+
+    shotmap_path = tmp_path / "shotmap.png"
+    xgrace_path = tmp_path / "xg.png"
+    passnet_path = tmp_path / "pass.png"
+    pressure_path = tmp_path / "press.png"
+    for p in [shotmap_path, xgrace_path, passnet_path, pressure_path]:
+        p.write_text("img")
+
+    logo_path = Path(__file__).resolve().parents[1] / "brand" / "ush_logo_dark.svg"
+    out_path = tmp_path / "report.html"
+
+    with pytest.raises(KeyError):
+        render_html_report_pro(
+            meta,
+            teams,
+            kpis,
+            ppda_vals,
+            shotmap_path,
+            xgrace_path,
+            passnet_path,
+            pressure_path,
+            logo_path,
+            out_path,
+        )
