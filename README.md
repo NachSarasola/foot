@@ -11,6 +11,10 @@ Salida:
 - report/river_libertad_report.html (2 páginas: tapa + contenido)
 - powerbi_exports/shots.csv y kpis.csv
 
+> **Nota**: las funciones de dibujo validan que las columnas
+> necesarias estén presentes (`x`, `y`, `receiver`) y lanzan
+> `ValueError` si faltan o si no hay datos para graficar.
+
 El archivo `report/img/pass_network.png` se crea al ejecutar el comando anterior y queda excluido del control de versiones.
 
 El informe HTML utiliza un template Jinja ubicado en `templates/ush_report_pro.html`. Si editás ese archivo, los cambios se reflejarán automáticamente al volver a ejecutar el pipeline.

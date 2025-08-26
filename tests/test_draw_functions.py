@@ -3,6 +3,7 @@ from pathlib import Path
 import hashlib
 import pandas as pd
 import matplotlib.pyplot as plt
+import pytest
 
 # Ensure scripts directory on path
 sys.path.append(str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -115,6 +116,15 @@ def test_draw_shot_map_pro_creates_image(tmp_path):
     assert _not_empty(out)
 
 
+def test_draw_shot_map_pro_raises_on_empty(tmp_path):
+    plt.style.use("styles/ush_pro.mplstyle")
+    teams = ['Home', 'Away']
+    meta = _meta()
+    out = tmp_path / 'shotmap_empty.png'
+    with pytest.raises(ValueError):
+        draw_shot_map_pro(pd.DataFrame(), teams, meta, out)
+
+
 def test_draw_xg_race_pro_creates_image(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     shots = _sample_shots()
@@ -138,13 +148,12 @@ def test_draw_pass_network_pro_creates_image(tmp_path):
     assert _not_empty(out)
 
 
-def test_draw_pass_network_pro_handles_missing_receivers(tmp_path):
+def test_draw_pass_network_pro_raises_on_missing_receivers(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     events = _sample_events_missing_receiver()
     teams = ['Home', 'Away']
     meta = _meta()
     kpis = _kpis()
     out = tmp_path / 'passnet_missing.png'
-    draw_pass_network_pro(events, teams, meta, kpis, 'Away', out)
-    assert out.exists()
-    assert _not_empty(out)
+    with pytest.raises(ValueError):
+        draw_pass_network_pro(events, teams, meta, kpis, 'Away', out)
