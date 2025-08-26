@@ -367,13 +367,26 @@ def annotate_goals_on_xg(ax, shots_df, team: str,
     if goals.empty:
         return
     ann_color = color or COLORS["goal"]
-    ax.scatter(goals["minute"], goals["cum_xg"], s=80, marker="o",
-               facecolors="none", edgecolors=ann_color, linewidths=1.5,
-               zorder=5)
+    labels = []
     for _, row in goals.iterrows():
-        ax.text(row["minute"], row["cum_xg"] + 0.02,
-                f"{int(row['minute'])}'", color=ann_color,
-                ha="center", va="bottom", fontsize=8, zorder=6)
+        txt = ax.text(
+            row["minute"],
+            row["cum_xg"],
+            "\u25CF",
+            color=ann_color,
+            ha="center",
+            va="center",
+            fontsize=10,
+            zorder=5,
+            bbox={
+                "boxstyle": "circle,pad=0.15",
+                "facecolor": COLORS["paper"],
+                "edgecolor": "none",
+                "alpha": 0.35,
+            },
+        )
+        labels.append(txt)
+    avoid_overlap(labels, padding=2)
 
 
 def save_fig_pro(fig, path, px: tuple[int, int] = (1600, 1000),
