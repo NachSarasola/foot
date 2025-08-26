@@ -24,13 +24,29 @@ HEIGHT_PX = 1000
 DPI = 240
 
 
-def xg_lite(row, xmax=120.0, ymax=80.0):
-    dx = max(0.0, xmax - float(row.get('x', 0)))
-    dy = float(row.get('y', 0)) - ymax / 2.0
-    dist = (dx * dx + dy * dy) ** 0.5
-    ang = np.arctan2(abs(dy), max(1e-6, dx))
-    val = 1 / (1 + np.exp((dist - 18) / 4)) * (0.6 + 0.4 * (1 - ang / 1.57))
-    return max(0.02, min(0.8, float(val)))
+def xg_model(row, xmax=120.0, ymax=80.0):
+    """Calibrated xG model based on distance and shooting angle.
+
+    Parameters
+    ----------
+    row : mapping
+        Must contain ``x`` and ``y`` coordinates.
+    xmax, ymax : float, optional
+        Pitch dimensions used to normalize input.
+
+    Returns
+    -------
+    float
+        Expected goal probability between 0 and 1.
+    """
+    x = float(row.get("x", 0))
+    y = float(row.get("y", 0))
+    dx = xmax - x
+    dy = abs(y - ymax / 2.0)
+    dist = math.hypot(dx, dy)
+    angle = math.atan2(7.32 / 2.0, dist)
+    logit = -0.1135 + (-0.09 * dist) + (15.0 * angle)
+    return 1.0 / (1.0 + math.exp(-logit))
 
 
 def ppda(df, team):
@@ -45,14 +61,18 @@ def ppda(df, team):
 
 
 def xt_lite(row):
-    """Estimate xT gain of a single action using xg_lite as proxy."""
-    start = xg_lite({'x': row.get('x', 0), 'y': row.get('y', 0)})
-    end = xg_lite({'x': row.get('end_x', row.get('x', 0)), 'y': row.get('end_y', row.get('y', 0))})
+    """Estimate xT gain of a single action using the calibrated xG model."""
+    start = xg_model({"x": row.get("x", 0), "y": row.get("y", 0)})
+    end = xg_model({"x": row.get("end_x", row.get("x", 0)), "y": row.get("end_y", row.get("y", 0))})
     return max(0.0, end - start)
 
 
 def calculate_xt(df, teams):
-    """Return total xT per team based on pass progression."""
+    """Return total xT per team based on pass progression.
+
+    The function relies on :func:`xg_model` to estimate the value of
+    the starting and ending locations of each pass.
+    """
     req = {'team', 'is_pass', 'x', 'y', 'end_x', 'end_y'}
     if not req.issubset(df.columns):
         return {t: 0.0 for t in teams}
@@ -387,7 +407,7 @@ def process_match(
 
     shots = events[events.get('is_shot', 0) == 1].copy()
     if 'xg' not in shots.columns or shots['xg'].isna().all():
-        shots['xg'] = shots.apply(xg_lite, axis=1)
+        shots['xg'] = shots.apply(xg_model, axis=1)
 
     kpis = {}
     for t in teams:
