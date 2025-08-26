@@ -219,7 +219,10 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
         raise ValueError(f"Missing required column(s) for pass network: {missing}")
 
     df = events_df.copy()
-    df_pass = df[(df.get('is_pass', 0) == 1) & (df.get('event_type') == 'Pass')]
+    df_pass = df[
+        (df.get('is_pass', 0) == 1)
+        & (df.get('event_type', '').astype(str).str.lower() == 'pass')
+    ]
     df_pass = df_pass[df_pass['team'] == team_focus].copy()
 
     df_pass = df_pass[df_pass['receiver'].notna() & (df_pass['receiver'].astype(str).str.strip() != '')].copy()
@@ -554,7 +557,43 @@ def run_pipeline(events_path, matches_path, out_dir, match_id=None, team_focus=N
     """
 
     events_df = pd.read_csv(Path(events_path))
+    players_path = Path(events_path).with_name("players.csv")
+    players_map = {}
+    if players_path.exists():
+        players_df = pd.read_csv(players_path)[["player_id", "name"]]
+        players_map = dict(zip(players_df["player_id"], players_df["name"]))
+        if "player" not in events_df.columns:
+            events_df = events_df.merge(players_df, on="player_id", how="left")
+            events_df = events_df.rename(columns={"name": "player"})
+    if "receiver" not in events_df.columns:
+        events_df = events_df.copy()
+        events_df["receiver"] = pd.NA
+        sort_cols = [c for c in ["match_id", "period", "minute", "second", "event_id"] if c in events_df.columns]
+        if sort_cols:
+            events_df = events_df.sort_values(sort_cols).reset_index(drop=True)
+        pass_mask = (events_df.get("is_pass", 0) == 1) & (events_df.get("outcome") == "complete")
+        for idx in events_df[pass_mask].index:
+            team_id = events_df.at[idx, "team_id"]
+            poss = events_df.at[idx, "possession_id"] if "possession_id" in events_df.columns else None
+            subsequent = events_df[(events_df.index > idx) & (events_df["team_id"] == team_id)]
+            if poss is not None:
+                subsequent = subsequent[subsequent["possession_id"] == poss]
+            if not subsequent.empty:
+                rec_id = subsequent.iloc[0].get("player_id")
+                events_df.at[idx, "receiver"] = players_map.get(rec_id)
     matches_df = pd.read_csv(Path(matches_path))
+    teams_path = Path(matches_path).with_name("teams.csv")
+    if teams_path.exists() and {"home_team_id", "away_team_id"}.issubset(matches_df.columns):
+        teams_df = pd.read_csv(teams_path)[["team_id", "name"]]
+        matches_df = matches_df.merge(
+            teams_df.rename(columns={"team_id": "home_team_id", "name": "home_team"}),
+            on="home_team_id",
+            how="left",
+        ).merge(
+            teams_df.rename(columns={"team_id": "away_team_id", "name": "away_team"}),
+            on="away_team_id",
+            how="left",
+        )
     return generate_report_for_match(
         events_df,
         matches_df,
