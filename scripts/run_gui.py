@@ -110,9 +110,22 @@ def main():
 
     def generate_report():
         """Run report generation and show status."""
-        if not (events_path.get() and matches_path.get() and matches_df is not None and output_dir.get()):
+        if not (
+            events_path.get()
+            and matches_path.get()
+            and matches_df is not None
+            and output_dir.get()
+        ):
             messagebox.showerror("Error", "Seleccione archivos y carpeta de salida")
             return
+
+        controls = [events_btn, matches_btn, match_cb, out_btn, run_btn]
+        for widget in controls:
+            widget.config(state="disabled")
+        progress.grid()
+        progress.start()
+        root.update_idletasks()
+
         try:
             result = run_all_pro.run_pipeline(
                 events_path.get(),
@@ -126,6 +139,12 @@ def main():
         except Exception as exc:
             status_var.set(f"Error: {exc}")
             messagebox.showerror("Error", status_var.get())
+        finally:
+            progress.stop()
+            progress.grid_remove()
+            for widget in controls:
+                widget.config(state="normal")
+            root.update_idletasks()
 
     # --- layout ---
     events_btn = ttk.Button(root, text="Cambiar...", command=select_events)
@@ -145,6 +164,10 @@ def main():
 
     status_label = ttk.Label(root, textvariable=status_var, anchor="w")
     status_label.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+    progress = ttk.Progressbar(root, mode="indeterminate")
+    progress.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+    progress.grid_remove()
 
     load_matches(matches_path.get())
 
