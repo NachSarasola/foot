@@ -73,7 +73,7 @@ def main():
         )
         if path:
             events_path.set(path)
-            events_btn.config(text="Cambiar...")
+            events_btn.config(text=f"Eventos: {Path(path).name}")
 
     def load_matches(path: str):
         """Load matches from CSV and populate dropdown."""
@@ -94,7 +94,7 @@ def main():
             match_var.set(options[0])
             match_cb["values"] = options
             match_cb.current(0)
-        matches_btn.config(text="Cambiar...")
+        matches_btn.config(text=f"Partidos: {Path(path).name}")
 
     def select_matches():
         """Pick matches CSV, read it and populate dropdown."""
@@ -151,10 +151,10 @@ def main():
             root.update_idletasks()
 
     # --- layout ---
-    events_btn = ttk.Button(root, text="Cambiar...", command=select_events)
+    events_btn = ttk.Button(root, text="Eventos", command=select_events)
     events_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
-    matches_btn = ttk.Button(root, text="Cambiar...", command=select_matches)
+    matches_btn = ttk.Button(root, text="Partidos", command=select_matches)
     matches_btn.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
     match_cb = ttk.Combobox(root, textvariable=match_var, state="readonly", width=40)
