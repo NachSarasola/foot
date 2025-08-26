@@ -21,6 +21,7 @@ import run_all_pro
 
 
 data_dir = Path(__file__).resolve().parents[1] / "data"
+default_out = Path(__file__).resolve().parents[1] / "report"
 
 
 def main():
@@ -58,7 +59,7 @@ def main():
 
     events_path = StringVar(value=str(data_dir / "events.csv"))
     matches_path = StringVar(value=str(data_dir / "matches.csv"))
-    output_dir = StringVar()
+    output_dir = StringVar(value=str(default_out))
     match_var = StringVar()
     status_var = StringVar()
 
@@ -103,7 +104,7 @@ def main():
 
     def choose_output():
         """Select an output directory for generated files."""
-        path = filedialog.askdirectory(title="Seleccionar carpeta de salida")
+        path = filedialog.askdirectory(title="Cambiar salida...")
         if path:
             output_dir.set(path)
             out_btn.config(text=f"Salida: {Path(path).name}")
@@ -156,7 +157,9 @@ def main():
     match_cb = ttk.Combobox(root, textvariable=match_var, state="readonly", width=40)
     match_cb.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
-    out_btn = ttk.Button(root, text="Elegir salida...", command=choose_output)
+    out_btn = ttk.Button(
+        root, text=f"Salida: {default_out.name}", command=choose_output
+    )
     out_btn.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
 
     run_btn = ttk.Button(root, text="Generar reporte", command=generate_report)
