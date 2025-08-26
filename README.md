@@ -15,6 +15,14 @@ El archivo `report/img/pass_network.png` se crea al ejecutar el comando anterior
 
 El informe HTML utiliza un template Jinja ubicado en `templates/ush_report_pro.html`. Si editás ese archivo, los cambios se reflejarán automáticamente al volver a ejecutar el pipeline.
 
+### Ejemplo rápido
+
+Si querés un vistazo rápido con datos sintéticos:
+
+```
+python scripts/run_demo.py
+```
+
 ## Jupyter
 Abrí `notebooks/01_river_libertad_pospartido.ipynb` y ejecutá todo.
 
