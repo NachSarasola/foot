@@ -16,7 +16,6 @@ from ush_style import (
     COLORS,
     add_grass_texture,
     scale_sizes,
-    label,
     text_halo,
     avoid_overlap,
     edge_curved,
@@ -372,10 +371,12 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
             (f"xG {t2}", {"color": "#8aaad6", "fontsize": 10}),
         ],
         [
-            ("● TOU C H E S      ― PASSES", {"color": "#8aaad6", "fontsize": 9}),
+            ("● TOUCHES — PASSES", {"color": "#8aaad6", "fontsize": 9}),
         ],
     ]
     _layout_text(ax_info, text_blocks)
+
+    max_w = links['count'].max() if not links.empty else 1
 
     for _, e in links.iterrows():
         a, b, w = e['player'], e['receiver'], int(e['count'])
@@ -384,20 +385,66 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
             xa, ya = float(locs.loc[a, 'x']), float(locs.loc[a, 'y'])
             xb, yb = float(locs.loc[b, 'x']), float(locs.loc[b, 'y'])
             color = COLORS['goal'] if prog else COLORS['cyan']
-            weight = (w + 1 if prog else w) * 0.6
-            edge_curved(ax_pitch, (xa, ya), (xb, yb), weight=weight, color=color, shadow=True)
+            weight = max(2.0, (w + 1 if prog else w) * 0.6)
+            alpha = 0.3 + 0.7 * (w / max_w)
+            edge_curved(
+                ax_pitch,
+                (xa, ya),
+                (xb, yb),
+                weight=weight,
+                color=color,
+                alpha=alpha,
+                shadow=True,
+            )
 
-    sizes = scale_sizes(touch_count.reindex(locs.index).fillna(0).astype(int), base=80, k=12, min_size=80, max_size=450)
-    pitch.scatter(locs['x'], locs['y'], s=sizes * 1.15, color='#ffffff', alpha=0.08, zorder=3, ax=ax_pitch)
-    pitch.scatter(locs['x'], locs['y'], s=sizes, color=COLORS['cyan'], edgecolors=COLORS['fog'],
-                  linewidth=0.8, alpha=0.95, zorder=4, ax=ax_pitch)
+    sizes = scale_sizes(
+        touch_count.reindex(locs.index).fillna(0).astype(int),
+        base=80,
+        k=12,
+        min_size=80,
+        max_size=450,
+    )
+    pitch.scatter(
+        locs['x'],
+        locs['y'],
+        s=sizes * 1.3,
+        color=COLORS['paper'],
+        alpha=0.12,
+        zorder=3,
+        ax=ax_pitch,
+    )
+    pitch.scatter(
+        locs['x'],
+        locs['y'],
+        s=sizes,
+        color=COLORS['cyan'],
+        edgecolors=COLORS['fog'],
+        linewidth=0.8,
+        alpha=0.95,
+        zorder=4,
+        ax=ax_pitch,
+    )
     texts = []
     for name, row in locs.iterrows():
-        txt = label(ax_pitch, row['x'], row['y'], str(name).replace('_', ' '))
+        txt = text_halo(
+            ax_pitch,
+            str(name).replace('_', ' '),
+            x=row['x'],
+            y=row['y'] - 3,
+            ha='center',
+            va='top',
+            color=COLORS['fog'],
+            fontsize=9,
+            bbox={
+                'boxstyle': 'round,pad=0.2',
+                'facecolor': COLORS['navy'],
+                'alpha': 0.8,
+                'edgecolor': 'none',
+            },
+        )
         texts.append(txt)
     avoid_overlap(texts, padding=6)
 
-    ax_pitch.set_title(f"Passing Network — {team_focus}", loc='left', color="#cfe3ff", fontsize=13, pad=10)
     save_fig_pro(fig, out_path)
     plt.close(fig)
 
