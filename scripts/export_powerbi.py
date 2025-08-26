@@ -47,7 +47,10 @@ def export_powerbi(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Map team and player names onto events
-    events = events.merge(teams, on="team_id", how="left")
+    events = events.merge(teams, on="team_id", how="left", suffixes=("", "_y"))
+    if "team_y" in events.columns:
+        events["team"] = events["team"].fillna(events["team_y"])
+        events = events.drop(columns=["team_y"])
     events = events.merge(players, on="player_id", how="left")
 
     # Derive flags for passes and carries to make use of xt_lookup
