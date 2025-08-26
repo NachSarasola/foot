@@ -8,7 +8,7 @@ import pytest
 # Ensure scripts directory on path
 sys.path.append(str(Path(__file__).resolve().parents[1] / 'scripts'))
 
-from run_all_pro import draw_shot_map_pro, draw_xg_race_pro, draw_pass_network_pro
+from draw_viz import draw_shot_map, draw_xg_race, draw_passing_network
 
 
 def _sample_shots():
@@ -107,61 +107,61 @@ def _not_empty(path: Path) -> bool:
     return hashlib.md5(path.read_bytes()).hexdigest() != empty_hash
 
 
-def test_draw_shot_map_pro_creates_image(tmp_path):
+def test_draw_shot_map_creates_image(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     shots = _sample_shots()
     teams = ['Home', 'Away']
     meta = _meta()
     out = tmp_path / 'shotmap.png'
-    draw_shot_map_pro(shots, teams, meta, out)
+    draw_shot_map(shots, teams, meta, out)
     assert out.exists()
     assert _not_empty(out)
 
 
-def test_draw_shot_map_pro_without_title(tmp_path):
+def test_draw_shot_map_without_title(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     shots = _sample_shots()
     teams = ['Home', 'Away']
     meta = _meta()
     out = tmp_path / 'shotmap_notitle.png'
-    draw_shot_map_pro(shots, teams, meta, out, show_title=False)
+    draw_shot_map(shots, teams, meta, out, show_title=False)
     assert out.exists()
     assert _not_empty(out)
 
 
-def test_draw_shot_map_pro_raises_on_empty(tmp_path):
+def test_draw_shot_map_raises_on_empty(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     teams = ['Home', 'Away']
     meta = _meta()
     out = tmp_path / 'shotmap_empty.png'
     with pytest.raises(ValueError):
-        draw_shot_map_pro(pd.DataFrame(), teams, meta, out)
+        draw_shot_map(pd.DataFrame(), teams, meta, out)
 
 
-def test_draw_xg_race_pro_creates_image(tmp_path):
+def test_draw_xg_race_creates_image(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     shots = _sample_shots()
     teams = ['Home', 'Away']
     meta = _meta()
     out = tmp_path / 'xg_race.png'
-    draw_xg_race_pro(shots, teams, meta, out)
+    draw_xg_race(shots, teams, meta, out)
     assert out.exists()
     assert _not_empty(out)
 
 
-def test_draw_pass_network_pro_creates_image(tmp_path):
+def test_draw_passing_network_creates_image(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     events = _sample_events()
     teams = ['Home', 'Away']
     meta = _meta()
     kpis = _kpis()
     out = tmp_path / 'passnet.png'
-    draw_pass_network_pro(events, teams, meta, kpis, 'Away', out)
+    draw_passing_network(events, teams, meta, kpis, 'Away', out)
     assert out.exists()
     assert _not_empty(out)
 
 
-def test_draw_pass_network_pro_raises_on_missing_receivers(tmp_path):
+def test_draw_passing_network_raises_on_missing_receivers(tmp_path):
     plt.style.use("styles/ush_pro.mplstyle")
     events = _sample_events_missing_receiver()
     teams = ['Home', 'Away']
@@ -169,4 +169,4 @@ def test_draw_pass_network_pro_raises_on_missing_receivers(tmp_path):
     kpis = _kpis()
     out = tmp_path / 'passnet_missing.png'
     with pytest.raises(ValueError):
-        draw_pass_network_pro(events, teams, meta, kpis, 'Away', out)
+        draw_passing_network(events, teams, meta, kpis, 'Away', out)
