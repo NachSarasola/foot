@@ -5,11 +5,18 @@ selecting an output folder and running
 :func:`run_all_pro.run_pipeline`.
 """
 
-import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import (
+    Tk,
+    StringVar,
+    PhotoImage,
+    ttk,
+    filedialog,
+    messagebox,
+)
 from pathlib import Path
 import pandas as pd
 
+from ush_style import COLORS
 import run_all_pro
 
 
@@ -18,14 +25,42 @@ data_dir = Path(__file__).resolve().parents[1] / "data"
 
 def main():
     """Launch GUI for report generation."""
-    root = tk.Tk()
+    root = Tk()
     root.title("Ush Analytics – Reporte Pro")
+    root.geometry("520x180")
+    root.configure(background=COLORS["paper"])
 
-    events_path = tk.StringVar(value=str(data_dir / "events.csv"))
-    matches_path = tk.StringVar(value=str(data_dir / "matches.csv"))
-    output_dir = tk.StringVar()
-    match_var = tk.StringVar()
-    status_var = tk.StringVar()
+    style = ttk.Style(root)
+    style.theme_use("clam")
+    style.configure(
+        "TButton",
+        font=("Rajdhani", 12, "bold"),
+        foreground=COLORS["paper"],
+        background=COLORS["blue"],
+    )
+    style.configure(
+        "TLabel",
+        font=("Inter", 11),
+        background=COLORS["paper"],
+        foreground=COLORS["ink"],
+    )
+    style.configure(
+        "TCombobox",
+        font=("Inter", 11),
+        fieldbackground=COLORS["paper"],
+        foreground=COLORS["ink"],
+    )
+
+    icon_path = Path(__file__).resolve().parents[1] / "brand" / "ush_avatar_on_fog.png"
+    if icon_path.exists():
+        icon_img = PhotoImage(file=str(icon_path))
+        root.iconphoto(False, icon_img)
+
+    events_path = StringVar(value=str(data_dir / "events.csv"))
+    matches_path = StringVar(value=str(data_dir / "matches.csv"))
+    output_dir = StringVar()
+    match_var = StringVar()
+    status_var = StringVar()
 
     matches_df = None  # DataFrame con los partidos cargados
     match_map = {}  # Relaciona el texto mostrado con ``match_id``
@@ -53,10 +88,8 @@ def main():
             options.append(display)
         if options:
             match_var.set(options[0])
-            menu = match_menu["menu"]
-            menu.delete(0, "end")
-            for opt in options:
-                menu.add_command(label=opt, command=tk._setit(match_var, opt))
+            match_cb["values"] = options
+            match_cb.current(0)
         matches_btn.config(text="Cambiar...")
 
     def select_matches():
@@ -95,23 +128,22 @@ def main():
             messagebox.showerror("Error", status_var.get())
 
     # --- layout ---
-    events_btn = tk.Button(root, text="Cambiar...", command=select_events)
+    events_btn = ttk.Button(root, text="Cambiar...", command=select_events)
     events_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
-    matches_btn = tk.Button(root, text="Cambiar...", command=select_matches)
+    matches_btn = ttk.Button(root, text="Cambiar...", command=select_matches)
     matches_btn.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-    match_menu = tk.OptionMenu(root, match_var, "")
-    match_menu.config(width=40)
-    match_menu.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+    match_cb = ttk.Combobox(root, textvariable=match_var, state="readonly", width=40)
+    match_cb.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
-    out_btn = tk.Button(root, text="Elegir salida...", command=choose_output)
+    out_btn = ttk.Button(root, text="Elegir salida...", command=choose_output)
     out_btn.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
 
-    run_btn = tk.Button(root, text="Generar reporte", command=generate_report)
+    run_btn = ttk.Button(root, text="Generar reporte", command=generate_report)
     run_btn.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
 
-    status_label = tk.Label(root, textvariable=status_var, anchor="w")
+    status_label = ttk.Label(root, textvariable=status_var, anchor="w")
     status_label.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
     load_matches(matches_path.get())
