@@ -12,9 +12,19 @@ from mplsoccer import Pitch
 
 # Estilo y helpers
 from ush_style import (
-    COLORS, add_grass_texture, scale_sizes, label,
-    curved_edge, annotate_goals_scatter, annotate_goals_on_xg,
-    annotate_score, shot_marker_kwargs, shot_on_target_mask
+    COLORS,
+    add_grass_texture,
+    scale_sizes,
+    label,
+    text_halo,
+    avoid_overlap,
+    edge_curved,
+    annotate_goals_scatter,
+    annotate_goals_on_xg,
+    annotate_score,
+    shot_marker_kwargs,
+    shot_on_target_mask,
+    save_fig_pro,
 )
 from ush_report import render_html_report_pro
 
@@ -146,7 +156,7 @@ def draw_shot_map_pro(shots_df, teams, meta, out_path):
     ax.set_title(f"Shot Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
     annotate_score(ax, teams, meta.get('home_goals', 0), meta.get('away_goals', 0))
 
-    fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
+    save_fig_pro(fig, out_path)
     plt.close(fig)
 
 
@@ -157,8 +167,9 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
         fig, ax = pitch.draw()
         fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
         ax.axis('off')
-        ax.text(0.5, 0.5, "Sin tiros registrados", ha='center', va='center', fontsize=14, color=COLORS['fog'])
-        fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
+        text_halo(ax, "Sin tiros registrados", x=0.5, y=0.5,
+                  ha='center', va='center', fontsize=14, color=COLORS['ink'])
+        save_fig_pro(fig, out_path)
         plt.close(fig)
         return
 
@@ -199,7 +210,7 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
     ax.legend(loc='upper left', frameon=False, fontsize=10)
     ax.set_title(f"xG Race — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
 
-    fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
+    save_fig_pro(fig, out_path)
     plt.close(fig)
 
 
@@ -318,17 +329,20 @@ def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
             xb, yb = float(locs.loc[b, 'x']), float(locs.loc[b, 'y'])
             color = COLORS['goal'] if prog else COLORS['cyan']
             weight = (w + 1 if prog else w) * 0.6
-            curved_edge(ax_pitch, xa, ya, xb, yb, weight=weight, color_main=color)
+            edge_curved(ax_pitch, (xa, ya), (xb, yb), weight=weight, color=color, shadow=True)
 
     sizes = scale_sizes(touch_count.reindex(locs.index).fillna(0).astype(int), base=80, k=12, min_size=80, max_size=450)
     pitch.scatter(locs['x'], locs['y'], s=sizes * 1.15, color='#ffffff', alpha=0.08, zorder=3, ax=ax_pitch)
     pitch.scatter(locs['x'], locs['y'], s=sizes, color=COLORS['cyan'], edgecolors=COLORS['fog'],
                   linewidth=0.8, alpha=0.95, zorder=4, ax=ax_pitch)
+    texts = []
     for name, row in locs.iterrows():
-        label(ax_pitch, row['x'], row['y'], str(name).replace('_', ' '))
+        txt = label(ax_pitch, row['x'], row['y'], str(name).replace('_', ' '))
+        texts.append(txt)
+    avoid_overlap(texts, padding=6)
 
     ax_pitch.set_title(f"Passing Network — {team_focus}", loc='left', color="#cfe3ff", fontsize=13, pad=10)
-    fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
+    save_fig_pro(fig, out_path)
     plt.close(fig)
 
 
@@ -347,7 +361,7 @@ def draw_pressure_map(events_df, teams, meta, out_path):
         fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
         ax.axis('off')
         ax.text(0.5, 0.5, "Sin acciones defensivas altas", ha='center', va='center', fontsize=14)
-        fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
+        save_fig_pro(fig, out_path)
         plt.close(fig)
         return
 
@@ -367,7 +381,7 @@ def draw_pressure_map(events_df, teams, meta, out_path):
     if leg is not None and leg.get_title() is not None:
         leg.get_title().set_color(COLORS['fog'])
     ax.set_title(f"Pressure Map — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
-    fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
+    save_fig_pro(fig, out_path)
     plt.close(fig)
 
 

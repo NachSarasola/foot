@@ -8,9 +8,11 @@ visualisation pipelines.
 
 from __future__ import annotations
 
+from pathlib import Path as FilePath
+
 import numpy as np
 from matplotlib.patches import PathPatch
-from matplotlib.path import Path
+from matplotlib.path import Path as MplPath
 
 # ---------------------------------------------------------------------------
 # Colour palette
@@ -29,6 +31,22 @@ COLORS = {
 # ---------------------------------------------------------------------------
 # Styling helpers
 # ---------------------------------------------------------------------------
+
+__all__ = [
+    "COLORS",
+    "add_grass_texture",
+    "scale_sizes",
+    "label",
+    "text_halo",
+    "avoid_overlap",
+    "edge_curved",
+    "shot_on_target_mask",
+    "shot_marker_kwargs",
+    "annotate_score",
+    "annotate_goals_scatter",
+    "annotate_goals_on_xg",
+    "save_fig_pro",
+]
 
 
 def add_grass_texture(ax, step: float = 5.0, alpha: float = 0.12,
@@ -84,7 +102,7 @@ def scale_sizes(values, base: float = 100, k: float = 1.0,
 
 def label(ax, x: float, y: float, text: str, *, y_offset: float = 3.0,
           color: str | None = None, fontsize: int = 9, zorder: int = 5,
-          **kwargs) -> None:
+          **kwargs):
     """Place a label slightly above a point on the pitch.
 
     Parameters
@@ -106,43 +124,74 @@ def label(ax, x: float, y: float, text: str, *, y_offset: float = 3.0,
     **kwargs :
         Additional keyword arguments forwarded to ``Axes.text``.
     """
-    ax.text(x, y - y_offset, text, ha="center", va="top",
-            fontsize=fontsize, color=color or COLORS["navy"],
-            zorder=zorder, **kwargs)
+    return ax.text(x, y - y_offset, text, ha="center", va="top",
+                   fontsize=fontsize, color=color or COLORS["navy"],
+                   zorder=zorder, **kwargs)
 
-
-def curved_edge(ax, x_start: float, y_start: float, x_end: float, y_end: float,
-                weight: float = 1.0, color_main: str | None = None,
-                color_bg: str | None = None, curvature: float = 0.2,
-                alpha: float = 0.6, zorder: int = 2) -> None:
-    """Draw a curved edge between two nodes on a pitch.
-
-    A quadratic Bézier curve is used so that overlapping edges remain
-    distinguishable.
+def text_halo(ax, text: str, **kwargs):
+    """Draw text with a semi-transparent white background box.
 
     Parameters
     ----------
     ax : matplotlib.axes.Axes
         Target axes.
-    x_start, y_start, x_end, y_end : float
-        Start and end coordinates of the edge.
-    weight : float, default 1.0
-        Line width representing the strength of the connection.
-    color_main : str, optional
-        Colour of the main line, defaults to ``COLORS['blue']``.
-    color_bg : str, optional
-        Background colour drawn beneath the main line, defaults to
-        ``COLORS['fog']``.
-    curvature : float, default 0.2
-        Curvature factor; higher values yield more pronounced curves.
-    alpha : float, default 0.6
-        Opacity of the main line.
-    zorder : int, default 2
-        Matplotlib z-order for the patches.
+    text : str
+        Text to display.
+    **kwargs :
+        Must include ``x`` and ``y`` coordinates along with any other
+        arguments accepted by :meth:`matplotlib.axes.Axes.text`.
     """
-    color_main = color_main or COLORS["blue"]
-    color_bg = color_bg or COLORS["fog"]
+    try:
+        x = kwargs.pop("x")
+        y = kwargs.pop("y")
+    except KeyError as exc:  # pragma: no cover - defensive
+        raise TypeError("text_halo requires 'x' and 'y' keyword arguments") from exc
 
+    bbox = kwargs.pop("bbox", None) or {
+        "boxstyle": "round,pad=0.2",
+        "facecolor": COLORS["paper"],
+        "alpha": 0.7,
+        "edgecolor": "none",
+    }
+    return ax.text(x, y, text, bbox=bbox, **kwargs)
+
+
+def avoid_overlap(labels, padding: float = 5) -> None:
+    """Nudge text labels vertically to minimise overlaps."""
+    if not labels:
+        return
+    ax = labels[0].axes
+    fig = ax.figure
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    moved = True
+    while moved:
+        moved = False
+        bboxes = [t.get_window_extent(renderer=renderer) for t in labels]
+        for i in range(len(labels)):
+            for j in range(i + 1, len(labels)):
+                if bboxes[i].overlaps(bboxes[j]):
+                    x, y = labels[j].get_position()
+                    x_disp, y_disp = ax.transData.transform((x, y))
+                    y_disp += padding
+                    x_new, y_new = ax.transData.inverted().transform((x_disp, y_disp))
+                    labels[j].set_position((x_new, y_new))
+                    renderer = fig.canvas.get_renderer()
+                    bboxes[j] = labels[j].get_window_extent(renderer=renderer)
+                    moved = True
+
+
+def edge_curved(ax, start: tuple[float, float], end: tuple[float, float],
+                weight: float = 1.0, color: str | None = None,
+                shadow: bool = False, shadow_color: str | None = None,
+                curvature: float = 0.2, alpha: float = 0.6,
+                zorder: int = 2) -> None:
+    """Draw a curved edge between two nodes with optional shadow."""
+    color = color or COLORS["blue"]
+    shadow_color = shadow_color or COLORS["fog"]
+
+    x_start, y_start = start
+    x_end, y_end = end
     cx = (x_start + x_end) / 2.0
     cy = (y_start + y_end) / 2.0
     dx = x_end - x_start
@@ -151,21 +200,38 @@ def curved_edge(ax, x_start: float, y_start: float, x_end: float, y_end: float,
     cy += dx * curvature
 
     path_data = [
-        (Path.MOVETO, (x_start, y_start)),
-        (Path.CURVE3, (cx, cy)),
-        (Path.CURVE3, (x_end, y_end)),
+        (MplPath.MOVETO, (x_start, y_start)),
+        (MplPath.CURVE3, (cx, cy)),
+        (MplPath.CURVE3, (x_end, y_end)),
     ]
     codes, verts = zip(*path_data)
-    curve = Path(verts, codes)
+    curve = MplPath(verts, codes)
 
-    if color_bg:
-        bg = PathPatch(curve, linewidth=weight + 2, edgecolor=color_bg,
-                       facecolor="none", alpha=alpha * 0.5, zorder=zorder)
+    if shadow:
+        bg = PathPatch(
+            curve,
+            linewidth=weight + 2,
+            edgecolor=shadow_color,
+            facecolor="none",
+            alpha=alpha * 0.5,
+            capstyle="round",
+            zorder=zorder,
+        )
         ax.add_patch(bg)
 
-    patch = PathPatch(curve, linewidth=weight, edgecolor=color_main,
-                      facecolor="none", alpha=alpha, zorder=zorder + 1)
+    patch = PathPatch(
+        curve,
+        linewidth=weight,
+        edgecolor=color,
+        facecolor="none",
+        alpha=alpha,
+        capstyle="round",
+        zorder=zorder + (1 if shadow else 0),
+    )
     ax.add_patch(patch)
+
+
+curved_edge = edge_curved
 
 
 def shot_on_target_mask(df):
@@ -308,3 +374,26 @@ def annotate_goals_on_xg(ax, shots_df, team: str,
         ax.text(row["minute"], row["cum_xg"] + 0.02,
                 f"{int(row['minute'])}'", color=ann_color,
                 ha="center", va="bottom", fontsize=8, zorder=6)
+
+
+def save_fig_pro(fig, path, px: tuple[int, int] = (1600, 1000),
+                 dpi: int = 240) -> None:
+    """Save figure in standard Ush resolution plus thumbnail.
+
+    The figure is saved to ``path`` and a reduced thumbnail named
+    ``<stem>_thumb.png`` is generated alongside it.
+    """
+    outfile = FilePath(path)
+    width, height = px
+    pad = 20
+    orig_size = fig.get_size_inches()
+    fig.set_size_inches((width - 2 * pad) / dpi, (height - 2 * pad) / dpi)
+    fig.savefig(outfile, dpi=dpi, bbox_inches="tight",
+                pad_inches=pad / dpi, facecolor=COLORS["navy"])
+
+    thumb = outfile.with_name(f"{outfile.stem}_thumb.png")
+    fig.set_size_inches((800 - 2 * pad) / dpi, (500 - 2 * pad) / dpi)
+    fig.savefig(thumb, dpi=dpi, bbox_inches="tight",
+                pad_inches=pad / dpi, facecolor=COLORS["navy"])
+
+    fig.set_size_inches(orig_size)
