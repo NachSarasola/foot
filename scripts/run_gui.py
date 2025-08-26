@@ -13,13 +13,16 @@ import pandas as pd
 import run_all_pro
 
 
+data_dir = Path(__file__).resolve().parents[1] / "data"
+
+
 def main():
     """Launch GUI for report generation."""
     root = tk.Tk()
     root.title("Ush Analytics – Reporte Pro")
 
-    events_path = tk.StringVar()
-    matches_path = tk.StringVar()
+    events_path = tk.StringVar(value=str(data_dir / "events.csv"))
+    matches_path = tk.StringVar(value=str(data_dir / "matches.csv"))
     output_dir = tk.StringVar()
     match_var = tk.StringVar()
     status_var = tk.StringVar()
@@ -34,17 +37,13 @@ def main():
         )
         if path:
             events_path.set(path)
-            events_btn.config(text=f"Eventos: {Path(path).name}")
+            events_btn.config(text="Cambiar...")
 
-    def select_matches():
-        """Pick matches CSV, read it and populate dropdown."""
+    def load_matches(path: str):
+        """Load matches from CSV and populate dropdown."""
         nonlocal matches_df
-        path = filedialog.askopenfilename(
-            title="Seleccionar matches.csv", filetypes=[("CSV files", "*.csv")]
-        )
         if not path:
             return
-        matches_path.set(path)
         matches_df = pd.read_csv(path)
         match_map.clear()
         options = []
@@ -58,7 +57,16 @@ def main():
             menu.delete(0, "end")
             for opt in options:
                 menu.add_command(label=opt, command=tk._setit(match_var, opt))
-        matches_btn.config(text=f"Partidos: {Path(path).name}")
+        matches_btn.config(text="Cambiar...")
+
+    def select_matches():
+        """Pick matches CSV, read it and populate dropdown."""
+        path = filedialog.askopenfilename(
+            title="Seleccionar matches.csv", filetypes=[("CSV files", "*.csv")]
+        )
+        if path:
+            matches_path.set(path)
+            load_matches(path)
 
     def choose_output():
         """Select an output directory for generated files."""
@@ -87,10 +95,10 @@ def main():
             messagebox.showerror("Error", status_var.get())
 
     # --- layout ---
-    events_btn = tk.Button(root, text="Eventos...", command=select_events)
+    events_btn = tk.Button(root, text="Cambiar...", command=select_events)
     events_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
-    matches_btn = tk.Button(root, text="Partidos...", command=select_matches)
+    matches_btn = tk.Button(root, text="Cambiar...", command=select_matches)
     matches_btn.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
     match_menu = tk.OptionMenu(root, match_var, "")
@@ -105,6 +113,8 @@ def main():
 
     status_label = tk.Label(root, textvariable=status_var, anchor="w")
     status_label.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+    load_matches(matches_path.get())
 
     root.mainloop()
 
