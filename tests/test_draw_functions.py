@@ -21,6 +21,7 @@ def _sample_shots():
             'y': 40,
             'xg': 0.1,
             'minute': 10,
+            'player': 'Home Shooter',
         },
         {
             'team': 'Away',
@@ -30,6 +31,7 @@ def _sample_shots():
             'y': 30,
             'xg': 0.2,
             'minute': 20,
+            'player': 'Away Scorer',
         },
     ])
 
@@ -112,6 +114,17 @@ def test_draw_shot_map_pro_creates_image(tmp_path):
     meta = _meta()
     out = tmp_path / 'shotmap.png'
     draw_shot_map_pro(shots, teams, meta, out)
+    assert out.exists()
+    assert _not_empty(out)
+
+
+def test_draw_shot_map_pro_without_title(tmp_path):
+    plt.style.use("styles/ush_pro.mplstyle")
+    shots = _sample_shots()
+    teams = ['Home', 'Away']
+    meta = _meta()
+    out = tmp_path / 'shotmap_notitle.png'
+    draw_shot_map_pro(shots, teams, meta, out, show_title=False)
     assert out.exists()
     assert _not_empty(out)
 

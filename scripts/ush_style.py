@@ -265,7 +265,8 @@ def shot_marker_kwargs(on_target: bool, color: str) -> dict:
         Keyword arguments suitable for ``Axes.scatter``.
     """
     marker = "s" if on_target else "o"
-    alpha = 0.95 if on_target else 0.7
+    # Shots on target should stand out more via opacity and edge width
+    alpha = 0.9 if on_target else 0.4
     lw = 1.0 if on_target else 0.8
     return {
         "marker": marker,
@@ -331,15 +332,39 @@ def annotate_goals_scatter(ax, shots_df, marker_size: float = 200,
     if goals.empty:
         return
     goal_color = color or COLORS["goal"]
-    ax.scatter(goals["x"], goals["y"], s=marker_size, marker="*",
-               color=goal_color, edgecolors="white", linewidths=1.0,
-               zorder=5)
+    ax.scatter(
+        goals["x"],
+        goals["y"],
+        s=marker_size,
+        marker="*",
+        color=goal_color,
+        edgecolors="white",
+        linewidths=1.2,
+        zorder=3,
+    )
+    labels = []
     for _, row in goals.iterrows():
         minute = row.get("minute")
+        player = row.get("player")
+        parts = []
         if minute is not None and not np.isnan(minute):
-            ax.text(row["x"], row["y"] - 2, f"{int(minute)}'",
-                    ha="center", va="top", fontsize=8,
-                    color="white", zorder=6)
+            parts.append(f"{int(minute)}'")
+        if player and isinstance(player, str):
+            parts.append(player)
+        if parts:
+            lbl = text_halo(
+                ax,
+                " ".join(parts),
+                x=row["x"],
+                y=row["y"] - 2,
+                ha="center",
+                va="top",
+                fontsize=8,
+                color=COLORS["ink"],
+                zorder=4,
+            )
+            labels.append(lbl)
+    avoid_overlap(labels)
 
 
 def annotate_goals_on_xg(ax, shots_df, team: str,
