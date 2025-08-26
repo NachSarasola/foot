@@ -1,39 +1,7 @@
 <!doctype html><html lang='es'><head><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width,initial-scale=1'><title>{{ title }}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --navy:#0A2540;--cyan:#00C2FF;--blue:#5B86E5;--paper:#FFFFFF;--fog:#E6EEF6;
-  --ink:#0A2540;--goal:#FF3366;--grass:#0B1E2D
-}
-*{box-sizing:border-box} body{margin:0;background:#0B1E2D;color:#E6EEF6;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-.wrap{max-width:1000px;margin:0 auto;padding:16px}
-.card{background:rgba(10,37,64,.25);backdrop-filter:blur(6px);border:1px solid rgba(230,238,246,.08);
-      border-radius:16px;box-shadow:0 6px 24px rgba(10,37,64,.28);padding:20px;margin:16px 0}
-h1{margin:0;font-size:32px}
-.section-title{margin:0 0 10px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.kpi{background:rgba(230,238,246,.06);border:1px solid rgba(230,238,246,.10);border-radius:12px;padding:12px}
-.kpi b{font-size:16px}
-.kpi-row{display:flex;justify-content:space-between}
-.kpi-row span:last-child{text-align:right}
-img{max-width:100%;border-radius:12px;border:1px solid rgba(230,238,246,.08)}
-figure{margin:0}
-figcaption{margin:4px 0 8px 0;font-size:16px;font-weight:700}
-footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
-.cover{background:linear-gradient(135deg,var(--navy),#081a30);color:#fff;padding:44px 0;border-bottom:1px solid rgba(230,238,246,.12)}
-.cover .title{display:flex;align-items:center;gap:16px}
-.cover h1{font-size:40px;margin:0}
-.badge{display:inline-flex;align-items:center;gap:10px;background:var(--cyan);color:#001018;border-radius:999px;
-       padding:6px 12px;font-weight:700;margin-left:10px}
-.meta{margin-top:14px;color:#cfe3ff}
-.small{font-size:12px;color:#BFD0E6}
-.logo{height:72px}
-.note{margin-top:6px}
-.full-span{grid-column:1/-1}
-@media print{@page{size:A4;margin:12mm} .pagebreak{page-break-before:always} a[href]:after{content:''}}
-</style></head>
+<link rel="stylesheet" href="{{ css }}">
+</head>
 <body>
 
   <!-- PORTADA -->
@@ -49,6 +17,10 @@ footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
       <div class="meta">
         <div><b>Partido:</b> {{ away }} @ {{ home }} — Ida</div>
         <div><b>Marcador:</b> {{ away_goals }}–{{ home_goals }}</div>
+        <div class="kpi-badges">
+          <span class="badge">Tiros {{ kpis[home].shots }}-{{ kpis[away].shots }}</span>
+          <span class="badge">xG {{ "%.2f"|format(kpis[home].xg) }}-{{ "%.2f"|format(kpis[away].xg) }}</span>
+        </div>
       </div>
     </div>
   </section>
@@ -76,28 +48,28 @@ footer{font-size:12px;color:#BFD0E6;text-align:center;padding:24px}
       <h2 class="section-title">Visuales</h2>
       <div class="grid">
         <div>
-          <figure>
-            <img src="{{ shotmap }}" alt="Shot Map">
-            <figcaption>Shot Map</figcaption>
-          </figure>
+            <figure>
+              <img src="{{ shotmap }}" alt="Shot Map" width="480" height="300">
+              <figcaption>Shot Map</figcaption>
+            </figure>
         </div>
         <div>
-          <figure>
-            <img src="{{ xgrace }}" alt="xG Race">
-            <figcaption>xG acumulado</figcaption>
-          </figure>
+            <figure>
+              <img src="{{ xgrace }}" alt="xG Race" width="480" height="300">
+              <figcaption>xG acumulado</figcaption>
+            </figure>
         </div>
         <div>
-          <figure>
-            <img src="{{ pressure }}" alt="Pressure Map">
-            <figcaption>Mapa de presión</figcaption>
-          </figure>
+            <figure>
+              <img src="{{ pressure }}" alt="Pressure Map" width="480" height="300">
+              <figcaption>Mapa de presión</figcaption>
+            </figure>
         </div>
         <div class="full-span">
-          <figure>
-            <img src="{{ passnet }}" alt="Passing Network">
-            <figcaption>Red de pases — {{ team_focus }}</figcaption>
-          </figure>
+            <figure>
+              <img src="{{ passnet }}" alt="Passing Network" width="960" height="600">
+              <figcaption>Red de pases — {{ team_focus }}</figcaption>
+            </figure>
         </div>
       </div>
     </section>
