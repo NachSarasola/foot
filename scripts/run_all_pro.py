@@ -66,15 +66,24 @@ def calculate_xt(df, teams):
 
 # ====== SHOT MAP — PRO ======
 def draw_shot_map_pro(shots_df, teams, meta, out_path):
+    """Draw shot map for both teams.
+
+    Parameters
+    ----------
+    shots_df : DataFrame
+        Shot events. Must contain at least ``x`` and ``y`` columns.
+
+    Raises
+    ------
+    ValueError
+        If ``shots_df`` is ``None``/empty or lacks required columns.
+    """
+    required = {"x", "y"}
     if shots_df is None or shots_df.empty:
-        pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
-        fig, ax = pitch.draw()
-        fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
-        ax.axis('off')
-        ax.text(0.5, 0.5, "Sin tiros registrados", ha='center', va='center', fontsize=14)
-        fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
-        plt.close(fig)
-        return
+        raise ValueError("No shot data available to draw shot map")
+    if not required.issubset(shots_df.columns):
+        missing = ", ".join(sorted(required - set(shots_df.columns)))
+        raise ValueError(f"Missing required column(s) for shot map: {missing}")
 
     team_color = {teams[0]: COLORS['blue'], teams[1]: COLORS['cyan']}
 
@@ -178,33 +187,24 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
 def draw_pass_network_pro(events_df, teams, meta, kpis, team_focus, out_path):
     """Dibuja la red de pases para un equipo.
 
-    Se requiere la columna ``receiver``; las filas con receptor nulo o
-    cadena vacía se eliminan antes de calcular la red.
+    Se requiere la columna ``receiver`` y coordenadas ``x``, ``y``,
+    ``end_x`` y ``end_y``. Si los datos son insuficientes se lanza
+    :class:`ValueError`.
     """
+    required = {"receiver", "x", "y", "end_x", "end_y"}
+    if events_df is None or events_df.empty:
+        raise ValueError("No event data available to draw passing network")
+    if not required.issubset(events_df.columns):
+        missing = ", ".join(sorted(required - set(events_df.columns)))
+        raise ValueError(f"Missing required column(s) for pass network: {missing}")
+
     df = events_df.copy()
     df_pass = df[(df.get('is_pass', 0) == 1) & (df.get('event_type') == 'Pass')]
     df_pass = df_pass[df_pass['team'] == team_focus].copy()
 
-    if 'receiver' not in df_pass.columns:
-        pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
-        fig, ax = pitch.draw()
-        fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
-        ax.axis('off')
-        ax.text(0.5, 0.5, "Sin datos suficientes para red de pases", ha='center', va='center', fontsize=14, color=COLORS['fog'])
-        fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
-        plt.close(fig)
-        return
-
     df_pass = df_pass[df_pass['receiver'].notna() & (df_pass['receiver'].astype(str).str.strip() != '')].copy()
     if df_pass.empty:
-        pitch = Pitch(pitch_type='statsbomb', pitch_color=COLORS['grass'], line_color=COLORS['fog'], linewidth=1)
-        fig, ax = pitch.draw()
-        fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
-        ax.axis('off')
-        ax.text(0.5, 0.5, "Sin datos suficientes para red de pases", ha='center', va='center', fontsize=14, color=COLORS['fog'])
-        fig.savefig(out_path, dpi=DPI, bbox_inches='tight', pad_inches=20 / DPI, facecolor=COLORS['navy'])
-        plt.close(fig)
-        return
+        raise ValueError("No passing data available after filtering")
 
     starts = df_pass[['player', 'x', 'y']].rename(columns={'player': 'name'})
     recvs = df_pass[['receiver', 'end_x', 'end_y']].rename(columns={'receiver': 'name', 'end_x': 'x', 'end_y': 'y'})
@@ -466,7 +466,9 @@ def generate_report_for_match(
 ):
     """Filter matches by ``match_id`` and process them.
 
-    Returns a list of dictionaries with paths to generated files per match.
+    Validates that ``events_df`` contains the columns required by the
+    visualizations (``x``, ``y`` and ``receiver``). Returns a list of
+    dictionaries with paths to generated files per match.
     """
     ROOT = Path(__file__).resolve().parents[1]
     BRAND = ROOT / "brand"
@@ -474,6 +476,12 @@ def generate_report_for_match(
     output_dir = Path(output_dir)
 
     plt.style.use("styles/ush_pro.mplstyle")
+
+    needed = {"x", "y", "receiver"}
+    missing_cols = needed - set(events_df.columns)
+    if missing_cols:
+        missing = ", ".join(sorted(missing_cols))
+        raise ValueError(f"Events DataFrame missing required column(s): {missing}")
 
     if match_id is not None and "match_id" in matches_df.columns:
         matches_df = matches_df[matches_df["match_id"] == match_id]

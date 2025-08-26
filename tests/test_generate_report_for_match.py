@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "scripts"))
 from run_all_pro import generate_report_for_match
@@ -126,3 +127,42 @@ def test_generate_report_for_match_returns_paths(tmp_path):
     assert expected.issubset(info.keys())
     for key in expected:
         assert Path(info[key]).exists(), f"missing {key}"
+
+
+def test_generate_report_for_match_missing_column(tmp_path):
+    events = pd.DataFrame([
+        {
+            "match_id": 1,
+            "team": "Home",
+            "is_shot": 1,
+            "is_goal": 0,
+            "x": 100,
+            "y": 40,
+            "xg": 0.1,
+            "minute": 10,
+            "event_type": "Shot",
+            "is_pass": 0,
+            "player": "H1",
+            "receiver": "",
+            "end_x": None,
+            "end_y": None,
+            "is_def_action": 0,
+        },
+    ])
+    matches = pd.DataFrame([
+        {
+            "match_id": 1,
+            "competition": "Friendly",
+            "date": "2023-01-01",
+            "venue_city": "City",
+            "home_team": "Home",
+            "away_team": "Away",
+            "home_goals": 0,
+            "away_goals": 1,
+        }
+    ])
+
+    events = events.drop(columns=["receiver"])
+
+    with pytest.raises(ValueError):
+        generate_report_for_match(events, matches, tmp_path, match_id=1)
