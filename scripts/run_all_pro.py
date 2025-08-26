@@ -504,10 +504,17 @@ def generate_report_for_match(
 
 
 def main():
+    """CLI for generating pro reports.
+
+    When called with ``--demo`` synthetic data are generated in ``demo_data/``
+    and used as defaults for ``--events``, ``--matches`` and ``--output`` if
+    they are not supplied by the user.
+    """
+
     parser = argparse.ArgumentParser(description="Generate Ush Analytics pro report")
-    parser.add_argument("--events", required=True, help="Path to events CSV")
-    parser.add_argument("--matches", required=True, help="Path to matches CSV")
-    parser.add_argument("--output", required=True, help="Output directory for generated files")
+    parser.add_argument("--events", help="Path to events CSV (required unless --demo)")
+    parser.add_argument("--matches", help="Path to matches CSV (required unless --demo)")
+    parser.add_argument("--output", help="Output directory for generated files (required unless --demo)")
     parser.add_argument("--team-focus", help="Team to highlight in passing network")
     parser.add_argument("--match-id", help="Match ID to process (processes all if omitted)")
     parser.add_argument("--report-name", default="river_libertad_report.html", help="Filename for HTML report")
@@ -521,7 +528,31 @@ def main():
         default="powerbi_exports",
         help="Directory for PowerBI exports (relative to match output dir)",
     )
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Generate synthetic demo data in demo_data/ and use it",
+    )
     args = parser.parse_args()
+
+    if args.demo:
+        demo_dir = Path(__file__).resolve().parent / "demo_data"
+        import generate_synthetic_data as gsd
+
+        gsd.DATA_DIR = demo_dir
+        gsd.main()
+        if args.events is None:
+            args.events = demo_dir / "events.csv"
+        if args.matches is None:
+            args.matches = demo_dir / "matches.csv"
+        if args.output is None:
+            args.output = demo_dir / "output"
+        print(f"Demo events CSV: {Path(args.events).resolve()}")
+        print(f"Demo matches CSV: {Path(args.matches).resolve()}")
+        print(f"Output directory: {Path(args.output).resolve()}")
+
+    if not (args.events and args.matches and args.output):
+        parser.error("--events, --matches and --output are required unless --demo is used")
 
     events_df = pd.read_csv(Path(args.events))
     matches_df = pd.read_csv(Path(args.matches))
@@ -529,7 +560,7 @@ def main():
     generate_report_for_match(
         events_df,
         matches_df,
-        args.output,
+        Path(args.output),
         args.match_id,
         args.team_focus,
         args.report_name,
