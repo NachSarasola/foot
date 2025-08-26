@@ -8,6 +8,7 @@ from pathlib import Path
 import pandas as pd, numpy as np, math
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+from matplotlib.ticker import MultipleLocator
 from mplsoccer import Pitch
 
 # Estilo y helpers
@@ -162,10 +163,12 @@ def draw_shot_map_pro(shots_df, teams, meta, out_path):
 
 # ====== XG RACE — PRO ======
 def draw_xg_race_pro(shots_df, teams, meta, out_path):
+    plt.style.use("styles/ush_pro.mplstyle")
     if shots_df is None or shots_df.empty:
         pitch = Pitch(pitch_color=COLORS['navy'], line_color=COLORS['navy'])
         fig, ax = pitch.draw()
         fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
+        fig.subplots_adjust(left=0.06, top=0.9)
         ax.axis('off')
         text_halo(ax, "Sin tiros registrados", x=0.5, y=0.5,
                   ha='center', va='center', fontsize=14, color=COLORS['ink'])
@@ -188,9 +191,18 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
     pitch = Pitch(pitch_color=COLORS['navy'], line_color=COLORS['navy'])
     fig, ax = pitch.draw()
     fig.set_size_inches(WIDTH_PX / DPI, HEIGHT_PX / DPI)
+    fig.subplots_adjust(left=0.06, top=0.9)
     ax.cla()
     for t in teams:
-        ax.plot(minutes, series[t].values, lw=1.6, alpha=0.95, label=t, color=colors[t])
+        ax.plot(
+            minutes,
+            series[t].values,
+            lw=1.6,
+            alpha=0.95,
+            label=t,
+            color=colors[t],
+            solid_capstyle="round",
+        )
 
     lead = series[teams[1]] - series[teams[0]]
     ax.fill_between(minutes, series[teams[0]], series[teams[1]],
@@ -198,17 +210,39 @@ def draw_xg_race_pro(shots_df, teams, meta, out_path):
     ax.fill_between(minutes, series[teams[0]], series[teams[1]],
                     where=(lead < 0), interpolate=True, color=COLORS['blue'], alpha=0.08, zorder=0)
 
-    annotate_goals_on_xg(ax, df, teams[0])
-    annotate_goals_on_xg(ax, df, teams[1])
-    ax.axvline(45, color='white', alpha=0.15, lw=1)
-    ax.text(45, ax.get_ylim()[1] * 0.05, "HT", color=COLORS['fog'], ha='center',
-            va='bottom', fontsize=9)
+    annotate_goals_on_xg(ax, df, teams[0], colors[teams[0]])
+    annotate_goals_on_xg(ax, df, teams[1], colors[teams[1]])
+    ax.axvline(45, color=COLORS['fog'], alpha=0.12, lw=1)
+    ax.text(
+        45,
+        ax.get_ylim()[1] * 0.05,
+        "HT",
+        color=COLORS['fog'],
+        ha='center',
+        va='bottom',
+        fontsize=9,
+    )
 
     ax.set_xlim(0, minutes[-1])
     ax.set_xlabel('Minuto')
     ax.set_ylabel('xG acumulado')
-    ax.legend(loc='upper left', frameon=False, fontsize=10)
-    ax.set_title(f"xG Race — {teams[1]} @ {teams[0]}  ({meta.get('date','')})", loc='left', pad=10, fontsize=13)
+    ax.xaxis.set_major_locator(MultipleLocator(5))
+    ax.yaxis.set_major_locator(MultipleLocator(0.5))
+    ax.legend(
+        loc='lower left',
+        bbox_to_anchor=(0, 1.02),
+        ncol=2,
+        frameon=False,
+        borderaxespad=0,
+        handlelength=1.2,
+        columnspacing=1.2,
+    )
+    ax.set_title(
+        f"xG Race — {teams[1]} @ {teams[0]}  ({meta.get('date','')})",
+        loc='left',
+        pad=10,
+        fontsize=13,
+    )
 
     save_fig_pro(fig, out_path)
     plt.close(fig)
